@@ -7,7 +7,8 @@ Décisions validées : `DECISIONS.md`. Ne jamais les modifier silencieusement.
 
 - **Phase en cours : 0-A — Audit technique du socle Odoo 19.0 Community.**
 - **Dernier point validé :** prompt maître V2.3 adopté ; Odoo 19.0 Community verrouillé (DEC-001).
-- Livrables 0-A remis le 2026-11-09 : **en attente de validation** (propositions P-001 à P-008 dans `DECISIONS.md`).
+- Livrables 0-A remis puis revus (revue corrective) le 2026-11-09 : **en attente de validation**
+  (propositions P-001 à P-011 dans `DECISIONS.md`).
 - Prochaine étape après validation : exécuter `scripts/test_install.sh` (P-001), puis phase 0-B
   (nécessite les réponses métier de Fayadort).
 
@@ -18,6 +19,9 @@ Décisions validées : `DECISIONS.md`. Ne jamais les modifier silencieusement.
 3. Aucun module OPL sans autorisation explicite du responsable du projet.
 4. Chaque dépôt (Odoo, OCA) est figé sur un **commit précis** (`repos.yaml`).
    Aucune montée de version sans analyse, tests et décision dans `DECISIONS.md`.
+5. Catégorie des modules candidats : source unique `scripts/audit/candidates.txt`.
+   Seuls les groupes de tests V-* valident ; E-* (à évaluer) et S-* (piste séparée) sont informatifs.
+6. Tests : uniquement dans l'environnement Docker `fayadort-test` ; ne jamais toucher une base réelle.
 
 ## Méthode de travail (obligatoire)
 

@@ -1,139 +1,192 @@
 # 03 — Audit des modules OCA (branche 19.0)
 
-Relevé du 9 novembre 2026. Dépôts figés dans `repos.yaml`. Audit **statique** (voir `00` §2-3) :
-aucun module n'a encore été installé. « Retenu (à tester) » signifie : candidat sérieux,
-**à confirmer par `scripts/test_install.sh`** avant validation définitive.
+Relevé du 9 novembre 2026, revu le même jour (revue corrective 0-A). Dépôts figés dans `repos.yaml`.
+Audit **statique** uniquement (voir `00` §3) : aucun module n'a encore été installé.
 
-## 1. Résultat global
+## 1. Catégories et effectifs
 
-- 49 modules OCA examinés, répartis dans 20 dépôts figés.
-- **47 statiquement OK** : manifeste en version 19.0, `installable`, toutes les dépendances
-  résolues dans Odoo 19 Community + OCA figé (aucune dépendance Enterprise), Python compilable,
-  XML valide, dossier de tests présent pour chacun.
-- 2 modules **différés et non figés** : `queue_job` (dépendance Python `openupgradelib` absente
-  de l'image officielle ; pas de besoin immédiat), `dms` (gestion documentaire ; les pièces jointes
-  natives suffisent pour la tranche 1).
-- Deux dépendances indirectes ont imposé l'ajout de dépôts : `product_secondary_unit`
-  (OCA/product-attribute) et `calendar_public_holiday` (OCA/calendar).
+La catégorie de chaque module est définie **à un seul endroit** : `scripts/audit/candidates.txt`.
+L'audit statique et le plan de tests lisent ce même fichier.
 
-## 2. Fiches des modules
+| Catégorie | Signification | Natifs | OCA |
+|---|---|---|---|
+| Retenu (à tester) | Candidat retenu, soumis aux tests de **validation** (groupes V-*) | 28 | 38 |
+| À évaluer | Testé à part pour information (groupes E-*). **Un succès ne vaut pas validation.** | — | 3 |
+| Piste séparée | Chantier distinct, testé isolément (groupe S-*) | — | 1 |
+| Différé | Non testé ; non figé ou reporté | 1 | 5 |
+| Rejeté | Exclu, raison au §3 | — | 2 |
 
-| Domaine | Module | Dépôt @ commit | Version | Licence | Maturité déclarée | Tests | Audit statique | Décision |
-|---|---|---|---|---|---|---|---|---|
-| Achats | `purchase_request` | purchase-workflow @ `8c86d5a2bd14` | 19.0.1.0.4 | LGPL-3 | non renseigné | oui | OK | RETENU (à tester) |
-| Achats | `base_tier_validation` | tier-validation @ `4f16809993cc` | 19.0.1.6.0 | AGPL-3 | Mature | oui | OK | RETENU (à tester) |
-| Achats | `purchase_tier_validation` | tier-validation @ `4f16809993cc` | 19.0.1.1.0 | AGPL-3 | non renseigné | oui | OK | RETENU (à tester) |
-| Achats | `purchase_request_tier_validation` | tier-validation @ `4f16809993cc` | 19.0.1.0.0 | AGPL-3 | non renseigné | oui | OK | RETENU (à tester) |
-| Achats | `purchase_landed_cost` | purchase-workflow @ `8c86d5a2bd14` | 19.0.1.0.0 | AGPL-3 | non renseigné | oui | OK | REJETÉ |
-| Importations | `stock_landed_costs_purchase_auto` | stock-logistics-workflow @ `bb03506a306e` | 19.0.1.0.2 | AGPL-3 | non renseigné | oui | OK | À ÉVALUER |
-| Stocks | `stock_no_negative` | stock-logistics-workflow @ `bb03506a306e` | 19.0.1.0.1 | AGPL-3 | non renseigné | oui | OK | RETENU (à tester) |
-| Stocks | `scrap_reason_code` | stock-logistics-workflow @ `bb03506a306e` | 19.0.1.0.0 | AGPL-3 | non renseigné | oui | OK | RETENU (à tester) |
-| Stocks | `stock_inventory` | stock-logistics-warehouse @ `e53710de6053` | 19.0.1.1.0 | LGPL-3 | Beta | oui | OK | DIFFÉRÉ |
-| Stocks | `stock_inventory_discrepancy` | stock-logistics-warehouse @ `e53710de6053` | 19.0.1.0.1 | AGPL-3 | non renseigné | oui | OK | DIFFÉRÉ |
-| Stocks | `stock_inventory_justification` | stock-logistics-warehouse @ `e53710de6053` | 19.0.1.1.0 | AGPL-3 | non renseigné | oui | OK | DIFFÉRÉ |
-| Stocks | `stock_secondary_unit` | stock-logistics-warehouse @ `e53710de6053` | 19.0.1.0.1 | AGPL-3 | Production/Stable | oui | OK | À ÉVALUER (0-B) |
-| Stocks | `stock_analytic` | account-analytic @ `f841015584f8` | 19.0.1.0.0 | AGPL-3 | non renseigné | oui | OK | RETENU (à tester) |
-| Fabrication | `mrp_stock_analytic` | account-analytic @ `f841015584f8` | 19.0.1.0.0 | AGPL-3 | non renseigné | oui | OK | RETENU (à tester) |
-| Fabrication | `mrp_bom_hierarchy` | manufacture @ `ca0a97252048` | 19.0.1.0.0 | AGPL-3 | non renseigné | oui | OK | RETENU (à tester) |
-| Fabrication | `mrp_production_back_to_draft` | manufacture @ `ca0a97252048` | 19.0.1.0.1 | AGPL-3 | non renseigné | oui | OK | REJETÉ (provisoire) |
-| Fabrication | `mrp_warehouse_calendar` | manufacture @ `ca0a97252048` | 19.0.1.0.0 | LGPL-3 | Production/Stable | oui | OK | RETENU (à tester) |
-| Fabrication | `mrp_bom_tracking` | manufacture @ `ca0a97252048` | 19.0.1.1.0 | LGPL-3 | Production/Stable | oui | OK | RETENU (à tester) |
-| Qualité | `quality_control_oca` | manufacture @ `ca0a97252048` | 19.0.1.0.0 | AGPL-3 | non renseigné | oui | OK | RETENU (à tester) — incomplet seul |
-| Maintenance | `maintenance_plan` | maintenance @ `24ae3dfb690e` | 19.0.1.0.2 | AGPL-3 | non renseigné | oui | OK | RETENU (à tester) |
-| Maintenance | `maintenance_equipment_status` | maintenance @ `24ae3dfb690e` | 19.0.1.0.0 | LGPL-3 | non renseigné | oui | OK | RETENU (à tester) |
-| Maintenance | `maintenance_request_purchase` | maintenance @ `24ae3dfb690e` | 19.0.1.0.0 | AGPL-3 | non renseigné | oui | OK | RETENU (à tester) |
-| Maintenance | `maintenance_product` | maintenance @ `24ae3dfb690e` | 19.0.1.0.0 | AGPL-3 | non renseigné | oui | OK | RETENU (à tester) |
-| Planification | `stock_demand_estimate` | stock-logistics-warehouse @ `e53710de6053` | 19.0.1.1.0 | LGPL-3 | Production/Stable | oui | OK | RETENU (à tester) |
-| Planification | `mrp_multi_level` | manufacture @ `ca0a97252048` | 19.0.1.0.5 | LGPL-3 | Production/Stable | oui | OK | RETENU (à tester) |
-| Planification | `mrp_multi_level_estimate` | manufacture @ `ca0a97252048` | 19.0.1.0.0 | LGPL-3 | Production/Stable | oui | OK | RETENU (à tester) |
-| Comptabilité | `account_financial_report` | account-financial-reporting @ `f48b4ea777c4` | 19.0.0.0.26 | AGPL-3 | non renseigné | oui | OK | RETENU (à tester) |
-| Comptabilité | `account_tax_balance` | account-financial-reporting @ `f48b4ea777c4` | 19.0.1.0.3 | AGPL-3 | Mature | oui | OK | RETENU (à tester) |
-| Comptabilité | `partner_statement` | account-financial-reporting @ `f48b4ea777c4` | 19.0.1.1.0 | AGPL-3 | non renseigné | oui | OK | RETENU (à tester) |
-| Comptabilité | `mis_builder` | mis-builder @ `cd4938376f66` | 19.0.1.2.2 | AGPL-3 | Production/Stable | oui | OK | RETENU (à tester) |
-| Comptabilité | `mis_builder_budget` | mis-builder @ `cd4938376f66` | 19.0.1.0.1 | AGPL-3 | Production/Stable | oui | OK | RETENU (à tester) |
-| Comptabilité | `mis_builder_cash_flow` | account-financial-reporting @ `f48b4ea777c4` | 19.0.1.0.0 | AGPL-3 | Beta | oui | OK | À ÉVALUER (Beta) |
-| Comptabilité | `account_reconcile_oca` | account-reconcile @ `81321938a1a9` | 19.0.1.1.2 | AGPL-3 | non renseigné | oui | OK | RETENU (à tester) |
-| Comptabilité | `account_statement_base` | account-reconcile @ `81321938a1a9` | 19.0.1.0.1 | LGPL-3 | Mature | oui | OK | RETENU (à tester) |
-| Comptabilité | `account_asset_management` | account-financial-tools @ `b3c7c0be3708` | 19.0.1.0.4 | AGPL-3 | Mature | oui | OK | RETENU (à tester) |
-| Comptabilité | `account_fiscal_year` | account-financial-tools @ `b3c7c0be3708` | 19.0.1.0.0 | AGPL-3 | Production/Stable | oui | OK | RETENU (à tester) |
-| Comptabilité | `account_lock_date_update` | account-financial-tools @ `b3c7c0be3708` | 19.0.1.0.0 | AGPL-3 | non renseigné | oui | OK | RETENU (à tester) |
-| Comptabilité | `account_analytic_required` | account-analytic @ `f841015584f8` | 19.0.1.0.0 | AGPL-3 | non renseigné | oui | OK | RETENU (à tester) |
-| Comptabilité | `purchase_analytic` | account-analytic @ `f841015584f8` | 19.0.1.0.0 | AGPL-3 | non renseigné | oui | OK | RETENU (à tester) |
-| RH | `hr_holidays_public` | hr-holidays @ `abd1ff286b50` | 19.0.1.0.4 | AGPL-3 | non renseigné | oui | OK | RETENU (à tester) |
-| RH | `hr_attendance_reason` | hr-attendance @ `c5964bd1b322` | 19.0.1.0.0 | LGPL-3 | non renseigné | oui | OK | RETENU (à tester) |
-| RH | `payroll` | payroll @ `2eca6caafc74` | 19.0.1.0.2 | LGPL-3 | non renseigné | oui | OK | PISTE SÉPARÉE (à tester) |
-| Transverse | `auditlog` | server-tools @ `a828058ebaca` | 19.0.2.0.2 | AGPL-3 | non renseigné | oui | OK | RETENU (à tester) |
-| Transverse | `queue_job` | — | — | — | — | — | non audité ici | DIFFÉRÉ (non figé) |
-| Transverse | `report_xlsx` | reporting-engine @ `2e3240211960` | 19.0.1.0.3 | AGPL-3 | Mature | oui | OK | RETENU (à tester) |
-| Transverse | `date_range` | server-ux @ `af19073dc864` | 19.0.1.0.2 | LGPL-3 | Mature | oui | OK | RETENU (à tester) |
-| Transverse | `web_responsive` | web @ `80f85e9bc628` | 19.0.1.1.1 | LGPL-3 | Production/Stable | oui | OK | RETENU (à tester) |
-| Transverse | `web_environment_ribbon` | web @ `80f85e9bc628` | 19.0.1.0.0 | AGPL-3 | non renseigné | oui | OK | RETENU (à tester) |
-| Transverse | `dms` | — | — | — | — | — | non audité ici | DIFFÉRÉ (non figé) |
+## 2. Résultat de l'audit statique
 
-« Maturité déclarée » = champ `development_status` du manifeste ; « non renseigné » est courant
-et ne préjuge pas de la qualité.
+Vérifications appliquées **à chaque module et à toute sa chaîne de dépendances** (détail dans
+`scripts/audit/static_audit.py`) : présence et unicité du nom, `installable`, version 19.0.x,
+dépendances Odoo résolues dans Odoo 19 Community + OCA figé, **dépendances externes Python et
+binaires comparées à l'environnement Odoo standard** (`requirements.txt` d'Odoo), existence des
+fichiers déclarés, syntaxe Python (grammaire 3.10), XML bien formé, fichiers de tests.
 
-## 3. Justification des décisions particulières
+| Statut | Retenu | À évaluer | Piste séparée | Différé | Rejeté |
+|---|---|---|---|---|---|
+| STATIQUE_OK | 65 | 3 | 1 | 4 | 2 |
+| DÉPENDANCE EXTERNE À FOURNIR | **1** | — | — | — | — |
+| BLOQUANT | 0 | 0 | 0 | 0 | 0 |
+| Absent (dépôt non figé) | — | — | — | 2 | — |
+
+**Correction par rapport à la première version de l'audit** : `hr_holidays_public` avait été classé
+« statique OK » à tort. Sa dépendance `calendar_public_holiday` (OCA/calendar) exige la bibliothèque
+Python **`openupgradelib`** à l'installation (utilisée dans `hooks.py`), absente de l'image officielle
+d'Odoo. Elle est désormais ajoutée à l'image de test (`docker/requirements-extra.txt`, version 3.13.7)
+— proposition P-009.
+
+Avertissement non bloquant : `account_asset_management` importe `openupgradelib` uniquement dans un
+script de migration (`migrations/19.0.1.0.4/pre-migrate.py`), exécuté lors d'une mise à jour depuis une
+version antérieure, pas lors d'une installation neuve.
+
+## 3. Fiches des modules OCA
+
+| Catégorie | Domaine | Module | Dépôt @ commit | Version | Licence | Maturité déclarée | Fichiers de tests | Audit statique | Remarques |
+|---|---|---|---|---|---|---|---|---|---|
+| Retenu (à tester) | Achats | `purchase_request` | purchase-workflow @ `8c86d5a2bd14` | 19.0.1.0.4 | LGPL-3 | non renseigné | 4 | OK |  |
+| Retenu (à tester) | Achats | `base_tier_validation` | tier-validation @ `4f16809993cc` | 19.0.1.6.0 | AGPL-3 | Mature | 3 | OK |  |
+| Retenu (à tester) | Achats | `purchase_tier_validation` | tier-validation @ `4f16809993cc` | 19.0.1.1.0 | AGPL-3 | non renseigné | 2 | OK |  |
+| Retenu (à tester) | Achats | `purchase_request_tier_validation` | tier-validation @ `4f16809993cc` | 19.0.1.0.0 | AGPL-3 | non renseigné | 1 | OK |  |
+| Retenu (à tester) | Stocks | `stock_no_negative` | stock-logistics-workflow @ `bb03506a306e` | 19.0.1.0.1 | AGPL-3 | non renseigné | 1 | OK |  |
+| Retenu (à tester) | Stocks | `scrap_reason_code` | stock-logistics-workflow @ `bb03506a306e` | 19.0.1.0.0 | AGPL-3 | non renseigné | 1 | OK |  |
+| Retenu (à tester) | Stocks | `stock_analytic` | account-analytic @ `f841015584f8` | 19.0.1.0.0 | AGPL-3 | non renseigné | 2 | OK |  |
+| Retenu (à tester) | Fabrication | `mrp_stock_analytic` | account-analytic @ `f841015584f8` | 19.0.1.0.0 | AGPL-3 | non renseigné | 1 | OK |  |
+| Retenu (à tester) | Fabrication | `mrp_bom_hierarchy` | manufacture @ `ca0a97252048` | 19.0.1.0.0 | AGPL-3 | non renseigné | 1 | OK |  |
+| Retenu (à tester) | Fabrication | `mrp_warehouse_calendar` | manufacture @ `ca0a97252048` | 19.0.1.0.0 | LGPL-3 | Production/Stable | 1 | OK |  |
+| Retenu (à tester) | Fabrication | `mrp_bom_tracking` | manufacture @ `ca0a97252048` | 19.0.1.1.0 | LGPL-3 | Production/Stable | 1 | OK |  |
+| Retenu (à tester) | Qualite | `quality_control_oca` | manufacture @ `ca0a97252048` | 19.0.1.0.0 | AGPL-3 | non renseigné | 1 | OK | incomplet seul (déclencheurs 18.0 non migrés) |
+| Retenu (à tester) | Maintenance | `maintenance_plan` | maintenance @ `24ae3dfb690e` | 19.0.1.0.2 | AGPL-3 | non renseigné | 3 | OK |  |
+| Retenu (à tester) | Maintenance | `maintenance_equipment_status` | maintenance @ `24ae3dfb690e` | 19.0.1.0.0 | LGPL-3 | non renseigné | 1 | OK |  |
+| Retenu (à tester) | Maintenance | `maintenance_request_purchase` | maintenance @ `24ae3dfb690e` | 19.0.1.0.0 | AGPL-3 | non renseigné | 1 | OK |  |
+| Retenu (à tester) | Maintenance | `maintenance_product` | maintenance @ `24ae3dfb690e` | 19.0.1.0.0 | AGPL-3 | non renseigné | 1 | OK |  |
+| Retenu (à tester) | Planification | `stock_demand_estimate` | stock-logistics-warehouse @ `e53710de6053` | 19.0.1.1.0 | LGPL-3 | Production/Stable | 1 | OK |  |
+| Retenu (à tester) | Planification | `mrp_multi_level` | manufacture @ `ca0a97252048` | 19.0.1.0.5 | LGPL-3 | Production/Stable | 1 | OK |  |
+| Retenu (à tester) | Planification | `mrp_multi_level_estimate` | manufacture @ `ca0a97252048` | 19.0.1.0.0 | LGPL-3 | Production/Stable | 1 | OK |  |
+| Retenu (à tester) | Comptabilite | `account_financial_report` | account-financial-reporting @ `f48b4ea777c4` | 19.0.0.0.26 | AGPL-3 | non renseigné | 7 | OK |  |
+| Retenu (à tester) | Comptabilite | `account_tax_balance` | account-financial-reporting @ `f48b4ea777c4` | 19.0.1.0.3 | AGPL-3 | Mature | 1 | OK |  |
+| Retenu (à tester) | Comptabilite | `partner_statement` | account-financial-reporting @ `f48b4ea777c4` | 19.0.1.1.0 | AGPL-3 | non renseigné | 9 | OK |  |
+| Retenu (à tester) | Comptabilite | `mis_builder` | mis-builder @ `cd4938376f66` | 19.0.1.2.2 | AGPL-3 | Production/Stable | 16 | OK |  |
+| Retenu (à tester) | Comptabilite | `mis_builder_budget` | mis-builder @ `cd4938376f66` | 19.0.1.0.1 | AGPL-3 | Production/Stable | 3 | OK |  |
+| Retenu (à tester) | Comptabilite | `account_reconcile_oca` | account-reconcile @ `81321938a1a9` | 19.0.1.1.2 | AGPL-3 | non renseigné | 3 | OK |  |
+| Retenu (à tester) | Comptabilite | `account_statement_base` | account-reconcile @ `81321938a1a9` | 19.0.1.0.1 | LGPL-3 | Mature | 1 | OK |  |
+| Retenu (à tester) | Comptabilite | `account_asset_management` | account-financial-tools @ `b3c7c0be3708` | 19.0.1.0.4 | AGPL-3 | Mature | 2 | OK |  |
+| Retenu (à tester) | Comptabilite | `account_fiscal_year` | account-financial-tools @ `b3c7c0be3708` | 19.0.1.0.0 | AGPL-3 | Production/Stable | 1 | OK |  |
+| Retenu (à tester) | Comptabilite | `account_lock_date_update` | account-financial-tools @ `b3c7c0be3708` | 19.0.1.0.0 | AGPL-3 | non renseigné | 1 | OK |  |
+| Retenu (à tester) | Comptabilite | `account_analytic_required` | account-analytic @ `f841015584f8` | 19.0.1.0.0 | AGPL-3 | non renseigné | 1 | OK |  |
+| Retenu (à tester) | Comptabilite | `purchase_analytic` | account-analytic @ `f841015584f8` | 19.0.1.0.0 | AGPL-3 | non renseigné | 1 | OK |  |
+| Retenu (à tester) | RH | `hr_holidays_public` | hr-holidays @ `abd1ff286b50` | 19.0.1.0.4 | AGPL-3 | non renseigné | 2 | Dépendance externe à fournir | python:openupgradelib (requis par calendar_public_holiday) |
+| Retenu (à tester) | RH | `hr_attendance_reason` | hr-attendance @ `c5964bd1b322` | 19.0.1.0.0 | LGPL-3 | non renseigné | 1 | OK |  |
+| Retenu (à tester) | Transverse | `auditlog` | server-tools @ `a828058ebaca` | 19.0.2.0.2 | AGPL-3 | non renseigné | 6 | OK |  |
+| Retenu (à tester) | Transverse | `report_xlsx` | reporting-engine @ `2e3240211960` | 19.0.1.0.3 | AGPL-3 | Mature | 1 | OK |  |
+| Retenu (à tester) | Transverse | `date_range` | server-ux @ `af19073dc864` | 19.0.1.0.2 | LGPL-3 | Mature | 4 | OK |  |
+| Retenu (à tester) | Transverse | `web_responsive` | web @ `80f85e9bc628` | 19.0.1.1.1 | LGPL-3 | Production/Stable | 2 | OK |  |
+| Retenu (à tester) | Transverse | `web_environment_ribbon` | web @ `80f85e9bc628` | 19.0.1.0.0 | AGPL-3 | non renseigné | 1 | OK |  |
+| À évaluer | Importations | `stock_landed_costs_purchase_auto` | stock-logistics-workflow @ `bb03506a306e` | 19.0.1.0.2 | AGPL-3 | non renseigné | 1 | OK | risque de doublon avec fay_import (groupage) |
+| À évaluer | Stocks | `stock_secondary_unit` | stock-logistics-warehouse @ `e53710de6053` | 19.0.1.0.1 | AGPL-3 | Production/Stable | 1 | OK | double unité pièces / m³ : dépend des réponses Fayadort |
+| À évaluer | Comptabilite | `mis_builder_cash_flow` | account-financial-reporting @ `f48b4ea777c4` | 19.0.1.0.0 | AGPL-3 | Beta | 1 | OK | statut Beta |
+| Piste séparée | RH | `payroll` | payroll @ `2eca6caafc74` | 19.0.1.0.2 | LGPL-3 | non renseigné | 6 | OK | règles camerounaises à écrire et faire valider |
+| Différé | Stocks | `stock_inventory` | stock-logistics-warehouse @ `e53710de6053` | 19.0.1.1.0 | LGPL-3 | Beta | 1 | OK |  |
+| Différé | Stocks | `stock_inventory_discrepancy` | stock-logistics-warehouse @ `e53710de6053` | 19.0.1.0.1 | AGPL-3 | non renseigné | 1 | OK |  |
+| Différé | Stocks | `stock_inventory_justification` | stock-logistics-warehouse @ `e53710de6053` | 19.0.1.1.0 | AGPL-3 | non renseigné | 1 | OK |  |
+| Différé | Transverse | `queue_job` | non figé | — | — | — | — | non audité | dépendance openupgradelib ; dépôt non figé |
+| Différé | Transverse | `dms` | non figé | — | — | — | — | non audité | dépôt non figé |
+| Rejeté | Achats | `purchase_landed_cost` | purchase-workflow @ `8c86d5a2bd14` | 19.0.1.0.0 | AGPL-3 | non renseigné | 1 | OK | système de frais d'approche parallèle au natif |
+| Rejeté | Fabrication | `mrp_production_back_to_draft` | manufacture @ `ca0a97252048` | 19.0.1.0.1 | AGPL-3 | non renseigné | 1 | OK | contraire à la correction traçable |
+
+« Maturité déclarée » = champ `development_status` du manifeste ; « non renseigné » est courant.
+
+### Justification des décisions particulières
 
 | Module | Décision | Raison |
 |---|---|---|
-| `purchase_landed_cost` | **Rejeté** | Système de répartition des frais **parallèle** à `stock_landed_costs` natif (sa propre description le présente comme une alternative au module officiel). Contraire à la règle « une seule source de vérité ». |
-| `mrp_production_back_to_draft` | **Rejeté (provisoire)** | Permet de remettre en brouillon un ordre confirmé ou annulé. Contraire au principe de correction traçable des opérations validées. À réexaminer seulement si un besoin précis apparaît. |
-| `stock_landed_costs_purchase_auto` | **À évaluer** | Crée automatiquement un frais d'approche vide, rattaché à **une** commande et à sa réception. Le dossier d'importation pourra regrouper **plusieurs** commandes (groupage) : risque de doublon avec `fay_import`. Décision en 0-B. |
-| `quality_control_oca` | **Retenu (à tester), incomplet seul** | Fournit l'infrastructure générique (tests, inspections, déclencheurs). Les modules qui déclenchent les contrôles **sur les réceptions** (`quality_control_stock_oca`) et **sur les fabrications** (`quality_control_mrp_oca`) existent en 18.0 mais **ne sont pas encore migrés en 19.0** (vérifié dans la branche 18.0 de OCA/manufacture). Options : porter ces deux modules en 19.0 (contribution OCA) ou écrire ces déclencheurs dans `fay_quality`. Proposition P-004. |
-| `stock_secondary_unit` | **À évaluer (0-B)** | Double unité (ex. bloc en pièces et en m³, rouleau en pièces et en mètres). Utile si la mousse doit être suivie simultanément en nombre et en volume. Dépend des réponses de Fayadort. |
-| `stock_inventory*` | **Différé** | Les ajustements d'inventaire natifs suffisent pour la tranche 1. |
+| `purchase_landed_cost` | **Rejeté** | Système de répartition des frais **parallèle** à `stock_landed_costs` natif (sa description le présente comme une alternative au module officiel). Contraire à la règle « une seule source de vérité ». |
+| `mrp_production_back_to_draft` | **Rejeté (provisoire)** | Remet en brouillon un ordre confirmé ou annulé. Contraire au principe de correction traçable des opérations validées. |
+| `stock_landed_costs_purchase_auto` | **À évaluer** | Crée automatiquement un frais d'approche vide rattaché à **une** commande et à sa réception. Un dossier d'importation pourra regrouper **plusieurs** commandes (groupage) : risque de doublon avec `fay_import`. Décision en 0-B. |
+| `stock_secondary_unit` | **À évaluer** | Double unité (bloc en pièces et en m³, rouleau en pièces et en mètres). Dépend des réponses de Fayadort (0-B). |
 | `mis_builder_cash_flow` | **À évaluer** | Statut « Beta ». |
-| `payroll` | **Piste séparée** | Moteur de paie générique, **migré sur `hr.version`** (vérifié). Son README précise qu'il s'agit d'un rétroportage du code d'Odoo SA, hors accord de contribution OCA. Les règles camerounaises (CNPS, IRPP, CAC, etc.) restent entièrement à écrire et à faire valider. |
+| `quality_control_oca` | **Retenu (à tester), incomplet seul** | Infrastructure générique de contrôle. Les déclencheurs sur réceptions (`quality_control_stock_oca`) et fabrications (`quality_control_mrp_oca`) existent en 18.0, **pas encore en 19.0** (vérifié dans la branche 18.0 de OCA/manufacture). Proposition P-004. |
+| `payroll` | **Piste séparée** | Moteur de paie générique, migré sur `hr.version` (vérifié). Son README indique un rétroportage du code d'Odoo SA, hors accord de contribution OCA. Les règles camerounaises restent entièrement à écrire et à faire valider. |
+| `stock_inventory*`, `queue_job`, `dms` | **Différés** | Pas de besoin en tranche 1 ; `queue_job` exige en plus `openupgradelib`. |
 
 ## 4. Développements spécifiques confirmés nécessaires
 
-Aucun module Community ou OCA 19.0 ne couvre :
+Aucun module Community ou OCA 19.0 ne couvre : l'interface atelier et le scan (`fay_shopfloor`) ;
+la cure, la libération et la découpe avec répartition du coût au volume (`fay_foam`) ; le dossier
+d'importation (`fay_import`) ; les déclencheurs qualité (portage ou `fay_quality`) ; le rapport d'écarts
+standard / réel (`fay_mrp`) ; les états financiers SYSCOHADA (paramétrage `mis_builder`) ; les règles
+de paie camerounaise (sur `payroll`).
 
-1. l'interface atelier sur tablette et le scan (`fay_shopfloor`) ;
-2. la cure, la libération et la découpe avec répartition du coût au volume (`fay_foam`) ;
-3. le dossier d'importation avec jalons, budget et génération des frais d'approche (`fay_import`) ;
-4. les déclencheurs qualité sur réceptions et fabrications (portage ou `fay_quality`) ;
-5. le rapport d'écarts standard / réel par ordre de fabrication (`fay_mrp`) ;
-6. les états financiers SYSCOHADA (paramétrage `mis_builder`, pas de code Python a priori) ;
-7. les règles de paie camerounaise (sur `payroll`).
+## 5. Licences
 
-## 5. Registre des licences
+### 5.1 Registre
 
-| Licence | Nombre de modules audités | Modules |
+| Licence | Modules audités | Détail |
 |---|---|---|
-| LGPL-3 | 42 (dont tous les modules natifs) | natifs ; `purchase_request`, `stock_inventory`, `stock_demand_estimate`, `mrp_multi_level`, `mrp_multi_level_estimate`, `mrp_warehouse_calendar`, `mrp_bom_tracking`, `maintenance_equipment_status`, `account_statement_base`, `hr_attendance_reason`, `payroll`, `date_range`, `web_responsive` |
-| AGPL-3 | 34 | tous les autres modules OCA retenus, dont `base_tier_validation`, `quality_control_oca`, `maintenance_plan`, `account_financial_report`, `mis_builder`, `account_reconcile_oca`, `account_asset_management`, `auditlog`, `report_xlsx` |
-| OPL (propriétaire, Odoo Apps Store) | **0** | Aucun. Tout module OPL est exclu sans autorisation explicite. |
+| LGPL-3 | 42 | 29 natifs Odoo ; 13 OCA : `purchase_request`, `stock_inventory`, `stock_demand_estimate`, `mrp_multi_level`, `mrp_multi_level_estimate`, `mrp_warehouse_calendar`, `mrp_bom_tracking`, `maintenance_equipment_status`, `account_statement_base`, `hr_attendance_reason`, `payroll`, `date_range`, `web_responsive` |
+| AGPL-3 | 34 | tous les autres modules OCA audités (colonne « Licence » du §3) |
+| OPL (propriétaire) | **0** | Aucun ; tout module OPL est exclu sans autorisation explicite |
+| Bibliothèque Python ajoutée | 1 | `openupgradelib` 3.13.7 — AGPL-3 (déclarée dans le `setup.py` du projet) |
 
-Le détail module par module figure dans le tableau du §2 (colonne « Licence ») et dans
-`scripts/audit/static_audit.py` (sortie JSON).
+Les chiffres incluent les modules différés et rejetés audités. Licence de `payroll` : LGPL-3, avec la
+particularité de provenance indiquée au §3.
 
-### Conséquences pratiques de l'AGPL-3 (à valider juridiquement si nécessaire)
+### 5.2 Ce que l'AGPL-3 impose, et ce qu'elle n'impose pas
 
-- L'AGPL ajoute à la GPL une obligation **réseau** : si un programme AGPL **modifié** est utilisé
-  par des personnes à travers un réseau, ces utilisateurs doivent pouvoir obtenir le code source
-  de la version modifiée.
-- Pour Fayadort, utilisateur interne de son propre ERP, l'impact pratique est **faible** :
-  les utilisateurs sont ses employés, et la règle du projet est de **ne jamais modifier** le code
-  OCA (extensions par héritage dans des modules `fay_*` séparés).
-- La question devient réelle si Fayadort **distribuait ou commercialisait** ses modules `fay_*`
-  (à un autre industriel, par exemple). Il faudrait alors une analyse juridique, les modules
-  dépendant de modules AGPL.
-- La licence des modules `fay_*` est à décider : proposition P-007.
+> Analyse technique d'un non-juriste, destinée à préparer une décision. Elle ne remplace pas l'avis
+> d'un avocat (droit de la propriété intellectuelle, Cameroun / OHADA, et droit des pays où un logiciel
+> serait distribué).
+
+| Situation | Obligation AGPL-3 | Application à Fayadort |
+|---|---|---|
+| Utiliser des modules AGPL non modifiés, en interne | Aucune obligation de publication | Cas actuel |
+| **Modifier** un module AGPL et le faire utiliser **à distance** (réseau) | Art. 13 : offrir aux utilisateurs distants le code source de la version modifiée | Évité par la règle « jamais de modification du code OCA » ; les utilisateurs seraient de toute façon les employés |
+| **Distribuer** (« convoyer ») un module AGPL, modifié ou non | Fournir le code source sous AGPL-3, sans restriction supplémentaire | Seulement en cas de cession ou de vente à un tiers |
+| Distribuer un module `fay_*` qui **dépend** d'un module AGPL | **Question ouverte** : un module qui hérite des classes d'un module AGPL est-il une œuvre dérivée ? Les avis divergent ; l'usage répandu dans l'écosystème OCA est de publier ces modules sous une licence compatible AGPL | À trancher par un juriste **avant** toute distribution |
+| Distribuer un module `fay_*` qui ne dépend que de modules LGPL | La LGPL permet une licence différente, y compris propriétaire, pour le module | Possible si la conception évite les dépendances AGPL |
+
+### 5.3 Dépendances entre modules : ce qu'il faudra mesurer
+
+La licence d'un module `fay_*` ne peut être raisonnée qu'à partir de **ses dépendances réelles**,
+directes et indirectes. `scripts/audit/static_audit.py` calcule déjà la chaîne de dépendances
+(`closure`) : il pourra produire, pour chaque futur module `fay_*`, la liste des modules AGPL qu'il
+entraîne. Exemples prévisibles, **à confirmer** quand les modules existeront :
+
+| Futur module | Dépendances AGPL probables |
+|---|---|
+| `fay_purchase` | `base_tier_validation`, `purchase_tier_validation` |
+| `fay_quality` | `quality_control_oca` |
+| `fay_dashboard` | `mis_builder`, `report_xlsx` |
+| `fay_foam`, `fay_import`, `fay_mrp` | aucune a priori (natif LGPL), sauf choix contraire en 0-B |
+
+### 5.4 Conséquences possibles d'une commercialisation future
+
+1. **Vente ou licence des modules `fay_*` à un autre industriel** (installation chez lui) : c'est une
+   distribution. Pour les modules dépendant de modules AGPL, une licence propriétaire serait juridiquement
+   risquée ; le modèle économique porterait plutôt sur le service (intégration, maintenance, formation).
+2. **Hébergement de l'ERP pour des tiers (SaaS)** : l'article 13 s'appliquerait à toute version modifiée
+   d'un programme AGPL utilisée à distance par ces clients.
+3. **Modules conçus pour être vendus** : les isoler dès la conception pour qu'ils ne dépendent que de
+   modules LGPL, ce qui laisse le choix de la licence.
+4. **Cession de l'entreprise ou de l'ERP** : à examiner avec le juriste au cas par cas.
+
+La décision de licence des modules `fay_*` est la proposition **P-007** (`DECISIONS.md`) : elle doit être
+prise avant la création du premier module (le manifeste Odoo exige une clé `license`) et, en cas
+d'intention de commercialiser, après un avis juridique.
 
 ## 6. Tests
 
 | Type de test | État |
 |---|---|
-| Audit statique (manifeste, dépendances, Python, XML) | **Exécuté** — 47/47 OCA OK, 29/29 natifs OK |
-| Récupération des dépôts aux commits figés (`fetch_repos.py --oca-only`) | **Exécuté** — 20/20 dépôts au bon commit |
-| Installation des modules par groupe | **Non exécuté** (pas de démon Docker ni de réseau d'installation dans l'environnement d'audit) |
-| Tests automatisés des modules OCA | **Non exécuté** (même raison) |
-| Installation de tous les modules ensemble (conflits) | **Non exécuté** (même raison) |
+| Audit statique (manifeste, chaîne de dépendances, dépendances externes, fichiers, syntaxe, XML) | **Exécuté** — aucun BLOQUANT ; 1 dépendance externe à fournir (traitée) |
+| Auto-test de l'audit statique sur 10 modules volontairement défectueux | **Exécuté** — les 7 types de défauts détectés |
+| Récupération des dépôts aux commits figés (`fetch_repos.py --oca-only`) | **Exécuté** — 20/20 au bon commit |
+| Logique de `test_install.sh` (plan, bases, comptage, garde-fous) avec un Docker simulé | **Exécuté** — conforme ; ne remplace pas une exécution réelle |
+| Installation par groupe, tests OCA, installation de l'ensemble | **Non exécutés** — à lancer sur une machine avec Docker (`00` §3) |
 
-Groupes prévus dans `scripts/test_install.sh` : achats ; importations et stocks ; fabrication,
-planification et qualité ; maintenance ; comptabilité ; RH ; transverse ; **tout ensemble**.
+Plan de tests (généré par `scripts/test_plan.py`, couverture vérifiée automatiquement) : 11 groupes
+V-domaine + V-ENSEMBLE (66 modules retenus) ; 3 groupes E-module + E-ENSEMBLE (69) ; 1 groupe S-payroll.
 
 ## 7. Commits figés (`repos.yaml`)
 

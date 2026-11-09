@@ -1,14 +1,18 @@
 # Environnement de TEST jetable — Phase 0-A (tests d'installation des modules).
-# Aucune donnée réelle de Fayadort. Ne pas utiliser en production.
+# Aucune donnée réelle de Fayadort. Ne jamais utiliser en production.
 #
-# Préalable : python3 scripts/fetch_repos.py   (sources figées dans repos.yaml)
-# Lancement : bash scripts/test_install.sh
+# Sécurité :
+#   - nom de projet fixe « fayadort-test » : les volumes ne concernent que ce projet ;
+#   - aucun port publié : la base de test n'est joignable que depuis le réseau interne du projet ;
+#   - Odoo ne se connecte qu'au service « db » de ce projet (docker/odoo.test.conf).
+#
+# Ne pas lancer à la main : utiliser scripts/test_install.sh (qui construit l'image de test).
 name: fayadort-test
 
 services:
   db:
     # PostgreSQL 16 = version de la distribution de référence Ubuntu 24.04 (Odoo 19 exige >= 13).
-    # À FIGER PAR DIGEST après le premier pull (le script test_install.sh l'affiche) : postgres:16@sha256:...
+    # Figer par digest avec : bash scripts/pin_postgres_digest.sh   (voir docs/01_SOCLE_ODOO19.md §3.1)
     image: postgres:16
     environment:
       POSTGRES_USER: odoo
@@ -19,15 +23,14 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U odoo"]
       interval: 5s
-      retries: 20
+      retries: 30
 
   odoo:
-    # Image d'exécution construite depuis le Dockerfile officiel Odoo 19.0, figé sur un commit
-    # (base ubuntu:noble / Python 3.12, wkhtmltopdf, dépendances Python système).
-    # Le code Odoo exécuté est celui de src/odoo, au commit figé dans repos.yaml.
-    build:
-      context: https://github.com/odoo/docker.git#f900094eb7492968332868d686caf22b966592ca:19.0
-    image: fayadort/odoo19-runtime:f900094
+    # Construite par scripts/test_install.sh à partir de :
+    #   - odoo/docker @ f900094 (dossier 19.0) : base ubuntu:noble, Python 3.12, dépendances système ;
+    #   - docker/Dockerfile.test : dépendances Python supplémentaires (requirements-extra.txt).
+    # Le code exécuté est celui de src/odoo (commit figé dans repos.yaml), monté en lecture seule.
+    image: fayadort/odoo19-test:local
     depends_on:
       db:
         condition: service_healthy
@@ -36,7 +39,6 @@ services:
     volumes:
       - ../src:/mnt/src:ro
       - ./odoo.test.conf:/etc/odoo/odoo.test.conf:ro
-      - ../test-logs:/mnt/logs
       - odoo-data:/var/lib/odoo
 
 volumes:

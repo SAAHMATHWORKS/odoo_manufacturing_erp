@@ -29,21 +29,47 @@ Relevé du 9 novembre 2026. Décision de version : **DEC-001 (validée)** — Od
 | Python | **3.12** (celui d'Ubuntu 24.04) | Versions de dépendances officiellement supportées |
 | PostgreSQL | **16** | Version d'Ubuntu 24.04, ≥ 13 exigé |
 
-## 3. Environnement d'exécution Docker
+## 3. Environnement de test Docker
 
-- **Image d'exécution** : construite depuis le Dockerfile officiel `odoo/docker`, dossier `19.0`,
-  figé au commit `f900094eb7492968332868d686caf22b966592ca` (2 nov. 2026). Contenu constaté :
-  base `ubuntu:noble`, client PostgreSQL, paquet Odoo nightly `19.0.20261102` vérifié par SHA-1.
-  Source : `19.0/Dockerfile`, lignes 1, 53-63, 75-79.
-- **Code exécuté** : celui de `src/odoo` au commit figé (monté en lecture seule), afin que le
-  code testé corresponde exactement à `repos.yaml`. L'image ne sert qu'à fournir les dépendances
-  système et Python de la même branche.
-- **PostgreSQL** : image `postgres:16`, **à figer par digest** (`postgres:16@sha256:…`) dès le
-  premier téléchargement ; `scripts/test_install.sh` affiche ce digest.
+Composition (fichiers `docker/`, orchestrés par `scripts/test_install.sh`) :
 
-> Pourquoi ne pas simplement utiliser l'étiquette `odoo:19.0` ? Parce qu'elle change à chaque
-> publication nocturne : deux installations à une semaine d'intervalle n'exécuteraient pas le
-> même code. Le prompt maître interdit les étiquettes flottantes.
+| Couche | Contenu | Figé par |
+|---|---|---|
+| Image de base | Dockerfile officiel `odoo/docker`, dossier `19.0` : base `ubuntu:noble` (Python 3.12), client PostgreSQL, wkhtmltopdf, paquet Odoo nightly `19.0.20261102` vérifié par SHA-1 (lignes 1, 53-63, 75-79) | commit `f900094eb7492968332868d686caf22b966592ca` |
+| Image de test | `docker/Dockerfile.test` : base + `docker/requirements-extra.txt` (`openupgradelib==3.13.7`) | versions dans `requirements-extra.txt` ; `pip freeze` enregistré à chaque campagne |
+| Code Odoo exécuté | `src/odoo`, monté en lecture seule | commit `a27a1090…` (`repos.yaml`) |
+| Modules OCA | `src/oca/<dépôt>`, montés en lecture seule | commits de `repos.yaml` |
+| PostgreSQL | `postgres:16` | **digest à figer** (§3.1) |
+
+Sécurité de l'environnement de test : projet Docker au nom fixe `fayadort-test` ; **aucun port publié**
+(la base n'est joignable que depuis le réseau interne du projet) ; `test_install.sh` refuse de démarrer si
+la configuration Odoo pointe vers un autre serveur que le service `db` du projet, ou si un port est publié.
+
+Limite de reproductibilité (proposition P-010) : l'image de base est reconstruite à partir d'un Dockerfile
+figé, mais celui-ci part de `ubuntu:noble` et de paquets système dont les versions évoluent ; deux
+constructions à plusieurs semaines d'intervalle peuvent différer légèrement. Pour l'environnement de test
+de la phase 0, c'est acceptable ; pour la production, il faudra figer l'image construite (registre privé ou
+digest) — à traiter en 0-C.
+
+### 3.1 Figer l'image PostgreSQL par digest (procédure)
+
+Une étiquette comme `postgres:16` désigne la dernière version 16.x publiée : elle change dans le temps.
+Le **digest** (`sha256:…`) désigne une image précise et immuable.
+
+1. Récupérer les sources (si ce n'est pas déjà fait) : `python3 scripts/fetch_repos.py`
+2. Figer l'image : `bash scripts/pin_postgres_digest.sh`
+   - télécharge `postgres:16`, lit son digest de dépôt (index multi-architecture, valable sur toute
+     machine) et remplace dans `docker/docker-compose.test.yml` la ligne `image: postgres:16` par
+     `image: postgres:16@sha256:<digest>` ;
+   - affiche la différence et l'image résultante (`docker compose config --images`) ;
+   - si l'image est déjà figée, ne modifie rien et signale seulement si un digest plus récent existe
+     (`--update` pour changer, décision à tracer).
+3. Vérifier la différence, supprimer `docker/docker-compose.test.yml.bak`, puis committer :
+   `git add docker/docker-compose.test.yml && git commit -m "Fige l'image PostgreSQL de test par digest"`
+4. Reporter le digest dans `DECISIONS.md` (P-002).
+
+Contrôle : chaque campagne de `test_install.sh` indique dans `RESULTS.md` si l'image est figée et le
+digest réellement exécuté.
 
 ## 4. Fonctions Enterprise absentes du socle (confirmé par absence dans `addons/`)
 

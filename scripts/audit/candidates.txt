@@ -1,79 +1,90 @@
-# domaine : module   (modules natifs et OCA candidats, Phase 0-A)
-Achats: purchase
-Achats: purchase_stock
-Achats: purchase_requisition
-Achats: purchase_requisition_stock
-Achats: purchase_request
-Achats: base_tier_validation
-Achats: purchase_tier_validation
-Achats: purchase_request_tier_validation
-Achats: purchase_landed_cost
-Importations: stock_landed_costs
-Importations: mrp_landed_costs
-Importations: stock_landed_costs_purchase_auto
-Stocks: stock
-Stocks: stock_account
-Stocks: product_expiry
-Stocks: stock_picking_batch
-Stocks: stock_no_negative
-Stocks: scrap_reason_code
-Stocks: stock_inventory
-Stocks: stock_inventory_discrepancy
-Stocks: stock_inventory_justification
-Stocks: stock_secondary_unit
-Stocks: stock_analytic
-Fabrication: mrp
-Fabrication: mrp_account
-Fabrication: purchase_mrp
-Fabrication: sale_mrp
-Fabrication: mrp_stock_analytic
-Fabrication: mrp_bom_hierarchy
-Fabrication: mrp_production_back_to_draft
-Fabrication: mrp_warehouse_calendar
-Fabrication: mrp_bom_tracking
-Qualité: quality_control_oca
-Maintenance: maintenance
-Maintenance: maintenance_plan
-Maintenance: maintenance_equipment_status
-Maintenance: maintenance_request_purchase
-Maintenance: maintenance_product
-Planification: stock_demand_estimate
-Planification: mrp_multi_level
-Planification: mrp_multi_level_estimate
-Ventes: sale_management
-Ventes: sale_stock
-Ventes: sale_margin
-Comptabilité: account
-Comptabilité: l10n_cm
-Comptabilité: l10n_syscohada
-Comptabilité: account_edi_ubl_cii
-Comptabilité: account_financial_report
-Comptabilité: account_tax_balance
-Comptabilité: partner_statement
-Comptabilité: mis_builder
-Comptabilité: mis_builder_budget
-Comptabilité: mis_builder_cash_flow
-Comptabilité: account_reconcile_oca
-Comptabilité: account_statement_base
-Comptabilité: account_asset_management
-Comptabilité: account_fiscal_year
-Comptabilité: account_lock_date_update
-Comptabilité: account_analytic_required
-Comptabilité: purchase_analytic
-RH: hr
-RH: hr_attendance
-RH: hr_holidays
-RH: hr_skills
-RH: hr_recruitment
-RH: hr_holidays_public
-RH: hr_attendance_reason
-RH: payroll
-Transverse: auditlog
-Transverse: queue_job
-Transverse: report_xlsx
-Transverse: date_range
-Transverse: web_responsive
-Transverse: web_environment_ribbon
-Transverse: dms
-Transverse: base_automation
-Transverse: spreadsheet_dashboard
+# Modules candidats — source unique pour l'audit statique ET le plan de tests.
+# Format : catégorie | domaine | module | remarque
+#
+# Catégories :
+#   retenu        : candidat retenu, soumis aux tests de validation (groupes V-*)
+#   a_evaluer     : testé à part pour information (groupes E-*) ; un succès ne vaut PAS validation
+#   piste_separee : chantier distinct, testé isolément (groupes S-*)
+#   differe       : non testé, non figé ou reporté
+#   rejete        : exclu (raison dans docs/03_AUDIT_OCA.md)
+#
+# Toute modification de catégorie doit être tracée dans DECISIONS.md.
+
+retenu        | Achats        | purchase                          |
+retenu        | Achats        | purchase_stock                    |
+retenu        | Achats        | purchase_requisition              | offres alternatives et comparaison
+retenu        | Achats        | purchase_requisition_stock        |
+retenu        | Achats        | purchase_mrp                      |
+retenu        | Achats        | purchase_request                  |
+retenu        | Achats        | base_tier_validation              |
+retenu        | Achats        | purchase_tier_validation          |
+retenu        | Achats        | purchase_request_tier_validation  |
+rejete        | Achats        | purchase_landed_cost              | système de frais d'approche parallèle au natif
+retenu        | Importations  | stock_landed_costs                |
+retenu        | Importations  | mrp_landed_costs                  |
+a_evaluer     | Importations  | stock_landed_costs_purchase_auto  | risque de doublon avec fay_import (groupage)
+retenu        | Stocks        | stock                             |
+retenu        | Stocks        | stock_account                     |
+retenu        | Stocks        | product_expiry                    |
+retenu        | Stocks        | stock_picking_batch               |
+retenu        | Stocks        | stock_no_negative                 |
+retenu        | Stocks        | scrap_reason_code                 |
+retenu        | Stocks        | stock_analytic                    |
+a_evaluer     | Stocks        | stock_secondary_unit              | double unité pièces / m³ : dépend des réponses Fayadort
+differe       | Stocks        | stock_inventory                   |
+differe       | Stocks        | stock_inventory_discrepancy       |
+differe       | Stocks        | stock_inventory_justification     |
+retenu        | Fabrication   | mrp                               |
+retenu        | Fabrication   | mrp_account                       |
+retenu        | Fabrication   | sale_mrp                          |
+retenu        | Fabrication   | mrp_stock_analytic                |
+retenu        | Fabrication   | mrp_bom_hierarchy                 |
+retenu        | Fabrication   | mrp_warehouse_calendar            |
+retenu        | Fabrication   | mrp_bom_tracking                  |
+rejete        | Fabrication   | mrp_production_back_to_draft      | contraire à la correction traçable
+retenu        | Qualite       | quality_control_oca               | incomplet seul (déclencheurs 18.0 non migrés)
+retenu        | Maintenance   | maintenance                       |
+retenu        | Maintenance   | maintenance_plan                  |
+retenu        | Maintenance   | maintenance_equipment_status      |
+retenu        | Maintenance   | maintenance_request_purchase      |
+retenu        | Maintenance   | maintenance_product               |
+retenu        | Planification | stock_demand_estimate             |
+retenu        | Planification | mrp_multi_level                   |
+retenu        | Planification | mrp_multi_level_estimate          |
+retenu        | Ventes        | sale_management                   |
+retenu        | Ventes        | sale_stock                        |
+retenu        | Ventes        | sale_margin                       |
+retenu        | Comptabilite  | account                           |
+retenu        | Comptabilite  | l10n_syscohada                    | couverture partielle : voir docs/02 §2.8
+retenu        | Comptabilite  | l10n_cm                           | couverture partielle : voir docs/02 §2.8
+differe       | Comptabilite  | account_edi_ubl_cii               | e-facture : spécifications DGI non publiées
+retenu        | Comptabilite  | account_financial_report          |
+retenu        | Comptabilite  | account_tax_balance               |
+retenu        | Comptabilite  | partner_statement                 |
+retenu        | Comptabilite  | mis_builder                       |
+retenu        | Comptabilite  | mis_builder_budget                |
+a_evaluer     | Comptabilite  | mis_builder_cash_flow             | statut Beta
+retenu        | Comptabilite  | account_reconcile_oca             |
+retenu        | Comptabilite  | account_statement_base            |
+retenu        | Comptabilite  | account_asset_management          |
+retenu        | Comptabilite  | account_fiscal_year               |
+retenu        | Comptabilite  | account_lock_date_update          |
+retenu        | Comptabilite  | account_analytic_required         |
+retenu        | Comptabilite  | purchase_analytic                 |
+retenu        | RH            | hr                                |
+retenu        | RH            | hr_attendance                     |
+retenu        | RH            | hr_holidays                       |
+retenu        | RH            | hr_skills                         |
+retenu        | RH            | hr_recruitment                    |
+retenu        | RH            | hr_holidays_public                |
+retenu        | RH            | hr_attendance_reason              |
+piste_separee | RH            | payroll                           | règles camerounaises à écrire et faire valider
+retenu        | Transverse    | auditlog                          |
+retenu        | Transverse    | report_xlsx                       |
+retenu        | Transverse    | date_range                        |
+retenu        | Transverse    | web_responsive                    |
+retenu        | Transverse    | web_environment_ribbon            |
+retenu        | Transverse    | base_automation                   |
+retenu        | Transverse    | spreadsheet_dashboard             |
+differe       | Transverse    | queue_job                         | dépendance openupgradelib ; dépôt non figé
+differe       | Transverse    | dms                               | dépôt non figé

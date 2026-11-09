@@ -1,0 +1,10 @@
+# Dépendances Python ajoutées à l'image de TEST, au-delà de celles fournies par l'image
+# officielle Odoo 19. Chaque ligne doit être justifiée par une dépendance externe déclarée
+# dans un manifeste (voir scripts/audit/static_audit.py, statut DEP_EXTERNE_A_FOURNIR).
+#
+# openupgradelib : requis à l'installation par calendar_public_holiday (OCA/calendar),
+#   dépendance de hr_holidays_public. Licence AGPL-3. Version = dernière étiquette du dépôt
+#   OCA/openupgradelib au 2026-11-09 (3.13.7, 25 août 2026) ; sa présence sur PyPI est vérifiée
+#   au moment du build (échec explicite sinon). Dépendance transitive : cssselect (non figée
+#   ici ; la version installée est enregistrée dans test-logs/<campagne>/pip-freeze.txt).
+openupgradelib==3.13.7

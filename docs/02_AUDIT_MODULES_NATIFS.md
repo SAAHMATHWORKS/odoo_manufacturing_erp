@@ -27,8 +27,8 @@ Les chemins de fichiers sont relatifs à la racine du dépôt Odoo.
 | Ventes | `sale_management`, `sale_stock`, `sale_mrp`, `sale_margin` | Devis, commandes, livraisons, marge | — | Confirmé |
 | Comptabilité | `account` | Facturation, écritures, paiements, rapprochement de base | base_setup, product, analytic, … | Confirmé |
 | Comptabilité | `analytic` | Plans analytiques (multi-axes) | base, mail, uom | Confirmé |
-| Comptabilité | `l10n_syscohada` | Plan comptable SYSCOHADA (et SYSCEBNL) | account | Confirmé |
-| Comptabilité | `l10n_cm` | Taxes et positions fiscales Cameroun, déclaration de TVA | l10n_syscohada, account | Confirmé |
+| Comptabilité | `l10n_syscohada` | Plan comptable SYSCOHADA (et SYSCEBNL) — **couverture partielle** (§2.8) | account | Confirmé (présence) |
+| Comptabilité | `l10n_cm` | Taxes et positions fiscales Cameroun, déclaration de TVA — **couverture partielle** (§2.8) | l10n_syscohada, account | Confirmé (présence) |
 | Comptabilité | `account_edi_ubl_cii` | Factures électroniques UBL/CII (base possible pour la future e-facture) | account | Confirmé, différé |
 | RH | `hr` | Employés, départements, postes, **contrats** (`hr.version`) | base_setup, resource_mail, … | Confirmé |
 | RH | `hr_attendance` | Pointage, mode kiosque | hr, barcodes, base_geolocalize | Confirmé |
@@ -103,14 +103,36 @@ Les chemins de fichiers sont relatifs à la racine du dépôt Odoo.
 - **Conséquence** : pas de modèle `fay.cost.center` ; départements, ateliers, lignes et dossiers
   d'importation sont des axes analytiques.
 
-### 2.8 Localisation camerounaise — Confirmé (incomplète pour les états)
-- `l10n_syscohada` : plan de comptes SYSCOHADA (1 134 comptes) et variante SYSCEBNL.
-- `l10n_cm` : 7 taxes — **TVA 19,25 %** (ventes, achats de biens, achats de services), 0 % à
-  l'export, à l'import, exonéré (ventes et achats) — ; positions fiscales ; **déclaration de TVA**
-  (`data/account_tax_report_data.xml`, 61 enregistrements). Les retenues à la source (TVA, IR)
-  n'y figurent pas : à vérifier avec l'expert-comptable.
-- **Absent** : états financiers SYSCOHADA (bilan, compte de résultat, tableau des flux),
-  DSF, déclarations sociales. → `mis_builder` (OCA) + validation par l'expert-comptable.
+### 2.8 Localisation camerounaise — couverture PARTIELLE, conformité NON acquise
+
+**Ce que contiennent les modules (confirmé dans le code au commit figé) :**
+- `l10n_syscohada` : plan de comptes SYSCOHADA (1 134 comptes, `data/template/account.account-syscohada.csv`)
+  et variante SYSCEBNL pour les entités à but non lucratif.
+- `l10n_cm` : 7 taxes — TVA 19,25 % (ventes, achats de biens, achats de services), 0 % à l'export,
+  à l'import, exonéré (ventes et achats) — ; positions fiscales ; structure de déclaration de TVA
+  (`data/account_tax_report_data.xml`, 61 enregistrements).
+- Aucun des deux modules ne contient de tests automatisés (0 fichier `tests/test_*.py`).
+
+**Ce qu'ils ne contiennent pas (confirmé par absence) :**
+- états financiers SYSCOHADA : bilan, compte de résultat, tableau des flux de trésorerie, notes annexes ;
+- DSF (déclaration statistique et fiscale) ;
+- retenues et prélèvements à la source (retenue de TVA, acomptes et précomptes d'impôt sur le revenu) ;
+- droits d'accises : la déclaration de TVA comporte une ligne « Amount of Excise Duty », mais aucune taxe
+  d'accise n'est définie ;
+- centimes additionnels et autres taxes spécifiques ;
+- déclarations sociales (CNPS) ;
+- facturation électronique au sens de la loi de finances 2026 (spécifications non publiées) ;
+- télédéclaration.
+
+**Ce qui n'a pas été vérifié :**
+- la version du référentiel (SYSCOHADA révisé) suivie par le plan de comptes, l'exactitude et
+  l'actualité des comptes, des taux, des libellés et des cases de la déclaration au regard de la
+  réglementation en vigueur en 2026 ;
+- l'adéquation aux pratiques du cabinet comptable de Fayadort.
+
+**Conclusion :** ces modules sont une **base de départ**. Ni la conformité comptable ni la conformité
+fiscale ne sont acquises. Elles devront être établies et validées par l'expert-comptable de Fayadort
+(proposition P-011), et les états manquants construits (paramétrage `mis_builder`, développements ciblés).
 
 ### 2.9 RH — Confirmé
 - Contrats intégrés à `hr` via `hr.version` (plus de module `hr_contract` en 19.0) :
@@ -128,7 +150,8 @@ Les chemins de fichiers sont relatifs à la racine du dépôt Odoo.
 | Plan directeur, prévisions | Absent (Enterprise) | OCA `mrp_multi_level` + `stock_demand_estimate` |
 | Demandes d'achat, validations | Absentes | OCA `purchase_request`, `*_tier_validation` |
 | Maintenance préventive planifiée | Partielle | OCA `maintenance_plan` |
-| États financiers, budgets, immobilisations | Absents (Enterprise) | OCA `mis_builder`, `account_financial_report`, `account_asset_management` |
+| États financiers, budgets, immobilisations | Absents (Enterprise) | OCA `mis_builder`, `account_financial_report`, `account_asset_management` ; états SYSCOHADA à construire et faire valider |
+| Conformité fiscale camerounaise complète | Absente (couverture partielle) | Plan de validation avec l'expert-comptable (P-011) |
 | Rapprochement bancaire avancé | Basique | OCA `account_reconcile_oca` |
 | Journal d'audit des modifications | Suivi partiel (chatter) | OCA `auditlog` |
 | Cure, découpe au volume | Briques natives présentes | Développement `fay_foam` sur `mrp` / `stock` |
