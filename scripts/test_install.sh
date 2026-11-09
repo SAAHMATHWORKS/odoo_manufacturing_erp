@@ -103,8 +103,10 @@ sys.exit(1 if bad else 0)" < /dev/null \
 
 DEMO=""
 if [ $WITH_DEMO -eq 1 ]; then
-  HELP=$("${ODOO[@]}" --help < /dev/null 2>&1 || true)   # capturé d'abord : pas de grep -q dans un tube avec pipefail
-  grep -q -- '--with-demo' <<< "$HELP" || die "Option --with-demo introuvable dans odoo-bin --help."
+  # En 19.0, « odoo-bin --help » liste les commandes ; les options du serveur s'obtiennent avec
+  # « odoo-bin server --help » (odoo/cli/command.py). Sortie capturée d'abord : pas de grep -q avec pipefail.
+  HELP=$("${COMPOSE[@]}" exec -T odoo python3 /mnt/src/odoo/odoo-bin server --help < /dev/null 2>&1 || true)
+  grep -q -- '--with-demo' <<< "$HELP" || die "Option --with-demo introuvable dans « odoo-bin server --help »."
   DEMO="--with-demo"
 fi
 
