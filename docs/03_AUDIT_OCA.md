@@ -10,8 +10,8 @@ L'audit statique et le plan de tests lisent ce même fichier.
 
 | Catégorie | Signification | Natifs | OCA |
 |---|---|---|---|
-| Retenu (à tester) | Candidat retenu, soumis aux tests de **validation** (groupes V-*) | 28 | 38 |
-| À évaluer | Testé à part pour information (groupes E-*). **Un succès ne vaut pas validation.** | — | 3 |
+| Retenu (à tester) | Candidat retenu, soumis aux tests de **validation** (groupes V-*) | 28 | 37 |
+| À évaluer | Testé à part pour information (groupes E-*). **Un succès ne vaut pas validation.** | — | 4 |
 | Piste séparée | Chantier distinct, testé isolément (groupe S-*) | — | 1 |
 | Différé | Non testé ; non figé ou reporté | 1 | 5 |
 | Rejeté | Exclu, raison au §3 | — | 2 |
@@ -26,7 +26,7 @@ fichiers déclarés, syntaxe Python (grammaire 3.10), XML bien formé, fichiers 
 
 | Statut | Retenu | À évaluer | Piste séparée | Différé | Rejeté |
 |---|---|---|---|---|---|
-| STATIQUE_OK | 65 | 3 | 1 | 4 | 2 |
+| STATIQUE_OK | 64 | 4 | 1 | 4 | 2 |
 | DÉPENDANCE EXTERNE À FOURNIR | **1** | — | — | — | — |
 | BLOQUANT | 0 | 0 | 0 | 0 | 0 |
 | Absent (dépôt non figé) | — | — | — | 2 | — |
@@ -72,7 +72,7 @@ version antérieure, pas lors d'une installation neuve.
 | Retenu (à tester) | Comptabilite | `account_reconcile_oca` | account-reconcile @ `81321938a1a9` | 19.0.1.1.2 | AGPL-3 | non renseigné | 3 | OK |  |
 | Retenu (à tester) | Comptabilite | `account_statement_base` | account-reconcile @ `81321938a1a9` | 19.0.1.0.1 | LGPL-3 | Mature | 1 | OK |  |
 | Retenu (à tester) | Comptabilite | `account_asset_management` | account-financial-tools @ `b3c7c0be3708` | 19.0.1.0.4 | AGPL-3 | Mature | 2 | OK |  |
-| Retenu (à tester) | Comptabilite | `account_fiscal_year` | account-financial-tools @ `b3c7c0be3708` | 19.0.1.0.0 | AGPL-3 | Production/Stable | 1 | OK |  |
+| À évaluer | Comptabilite | `account_fiscal_year` | account-financial-tools @ `b3c7c0be3708` | 19.0.1.0.0 | AGPL-3 | Production/Stable | 1 | OK | conflit de droits avec `mis_builder` (campagne 1) ; utilité à confirmer (exercice civil OHADA) |
 | Retenu (à tester) | Comptabilite | `account_lock_date_update` | account-financial-tools @ `b3c7c0be3708` | 19.0.1.0.0 | AGPL-3 | non renseigné | 1 | OK |  |
 | Retenu (à tester) | Comptabilite | `account_analytic_required` | account-analytic @ `f841015584f8` | 19.0.1.0.0 | AGPL-3 | non renseigné | 1 | OK |  |
 | Retenu (à tester) | Comptabilite | `purchase_analytic` | account-analytic @ `f841015584f8` | 19.0.1.0.0 | AGPL-3 | non renseigné | 1 | OK |  |
@@ -106,6 +106,7 @@ version antérieure, pas lors d'une installation neuve.
 | `stock_landed_costs_purchase_auto` | **À évaluer** | Crée automatiquement un frais d'approche vide rattaché à **une** commande et à sa réception. Un dossier d'importation pourra regrouper **plusieurs** commandes (groupage) : risque de doublon avec `fay_import`. Décision en 0-B. |
 | `stock_secondary_unit` | **À évaluer** | Double unité (bloc en pièces et en m³, rouleau en pièces et en mètres). Dépend des réponses de Fayadort (0-B). |
 | `mis_builder_cash_flow` | **À évaluer** | Statut « Beta ». |
+| `account_fiscal_year` | **À évaluer** (était « retenu ») | Campagne 1 : avec ce module installé, un utilisateur sans droits comptables complets qui calcule un rapport `mis_builder` obtient une erreur d'accès. Cause lue dans le code : le module surcharge `res.company.compute_fiscalyear_dates` (`models/res_company.py`) et recherche `account.fiscal.year` sans élévation de droits, alors que ses droits de lecture sont réservés aux groupes comptables (`security/ir.model.access.csv`). Par ailleurs, l'exercice OHADA correspond en principe à l'année civile, que le paramétrage natif de la société (dernier jour et mois de l'exercice) gère déjà : utilité à confirmer avec l'expert-comptable. Proposition P-012. |
 | `quality_control_oca` | **Retenu (à tester), incomplet seul** | Infrastructure générique de contrôle. Les déclencheurs sur réceptions (`quality_control_stock_oca`) et fabrications (`quality_control_mrp_oca`) existent en 18.0, **pas encore en 19.0** (vérifié dans la branche 18.0 de OCA/manufacture). Proposition P-004. |
 | `payroll` | **Piste séparée** | Moteur de paie générique, migré sur `hr.version` (vérifié). Son README indique un rétroportage du code d'Odoo SA, hors accord de contribution OCA. Les règles camerounaises restent entièrement à écrire et à faire valider. |
 | `stock_inventory*`, `queue_job`, `dms` | **Différés** | Pas de besoin en tranche 1 ; `queue_job` exige en plus `openupgradelib`. |
@@ -183,10 +184,37 @@ d'intention de commercialiser, après un avis juridique.
 | Auto-test de l'audit statique sur 10 modules volontairement défectueux | **Exécuté** — les 7 types de défauts détectés |
 | Récupération des dépôts aux commits figés (`fetch_repos.py --oca-only`) | **Exécuté** — 20/20 au bon commit |
 | Logique de `test_install.sh` (plan, bases, comptage, garde-fous) avec un Docker simulé | **Exécuté** — conforme ; ne remplace pas une exécution réelle |
-| Installation par groupe, tests OCA, installation de l'ensemble | **Non exécutés** — à lancer sur une machine avec Docker (`00` §3) |
+| Installation par groupe, tests OCA, installation de l'ensemble | Campagne 1 exécutée le 9 nov. 2026 — **résultats non probants** (§6.1) ; campagne 2 à lancer |
 
 Plan de tests (généré par `scripts/test_plan.py`, couverture vérifiée automatiquement) : 11 groupes
-V-domaine + V-ENSEMBLE (66 modules retenus) ; 3 groupes E-module + E-ENSEMBLE (69) ; 1 groupe S-payroll.
+V-domaine + V-ENSEMBLE (65 modules retenus) ; 4 groupes E-module + E-ENSEMBLE (69) ; 1 groupe S-payroll.
+
+### 6.1 Campagne 1 (9 nov. 2026, 20261109_133810) — résultats non probants
+
+**Résultats bruts** : les 66 modules alors retenus se sont installés par domaine et ensemble, sans
+erreur ; 9 groupes de validation sur 10 avec tests OCA sans échec ; **V-Comptabilite : 278 tests,
+1 échec, 3 erreurs** ; E-stock_landed_costs_purchase_auto : 5 tests, 5 erreurs ; autres groupes E/S sans échec.
+
+**Deux défauts de l'environnement de test invalident la campagne** (corrigés) :
+
+1. **Code Odoo mélangé.** En 19.0, `odoo` et `odoo.addons` sont des paquets d'espace de noms (pas de
+   `__init__.py`) : tous les dossiers `odoo/` du chemin Python sont fusionnés. Le paquet Odoo nightly
+   préinstallé dans l'image officielle (`/usr/lib/python3/dist-packages/odoo`) passait devant
+   `src/odoo` pour les modules standard (visible dans les traces : `…/dist-packages/odoo/addons/purchase/…`).
+   Le cœur venait du commit figé, les modules standard du paquet du 2 nov. Correction : suppression de ce
+   paquet dans `docker/Dockerfile.test` ; contrôle avant campagne et dans chaque journal (`addons paths`).
+2. **Données de démonstration non chargées.** La détection de `--with-demo` échouait (`grep -q` dans un
+   tube avec `pipefail`). Les tests OCA supposent les données de démonstration. Correction : détection
+   fiable ; option rendue obligatoire sauf `--no-demo`.
+
+**Analyse des 9 erreurs et échecs** (journaux transmis le 9 nov.) :
+
+| Test | Cause | Nature |
+|---|---|---|
+| `stock_landed_costs_purchase_auto` (5 erreurs) | « no default journal is configured for landed costs » : base sans plan comptable ni journaux | Environnement (démo absente). **Enseignement fonctionnel** : ce module bloque la confirmation de toute commande d'achat tant qu'un journal de frais d'approche n'est pas configuré |
+| `partner_statement` (2 erreurs) | « No journal could be found … for any of those types: sale » : base sans journaux | Environnement (démo absente) |
+| `mis_builder.test_unprivileged` (1 erreur) | Erreur d'accès sur `account.fiscal.year` via `account_fiscal_year` | **Réelle** : interaction entre deux modules OCA (P-012) |
+| `mis_builder.test_drilldown_action_name_with_account` (1 échec) | Nom d'action différent de celui attendu ; l'assertion n'affiche pas les valeurs | Indéterminée : à revoir après la campagne 2 |
 
 ## 7. Commits figés (`repos.yaml`)
 

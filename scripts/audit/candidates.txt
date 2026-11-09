@@ -67,7 +67,7 @@ a_evaluer     | Comptabilite  | mis_builder_cash_flow             | statut Beta
 retenu        | Comptabilite  | account_reconcile_oca             |
 retenu        | Comptabilite  | account_statement_base            |
 retenu        | Comptabilite  | account_asset_management          |
-retenu        | Comptabilite  | account_fiscal_year               |
+a_evaluer     | Comptabilite  | account_fiscal_year               | conflit de droits avec mis_builder (campagne 1) ; exercice civil OHADA : utilité à confirmer
 retenu        | Comptabilite  | account_lock_date_update          |
 retenu        | Comptabilite  | account_analytic_required         |
 retenu        | Comptabilite  | purchase_analytic                 |

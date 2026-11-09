@@ -28,20 +28,23 @@ nouvelle entrée qui la remplace explicitement.
   validé que si son groupe V-domaine **et** V-ENSEMBLE sont « OK » ; « À ANALYSER » exige une revue des
   erreurs avant décision.
 - **Impact si refusé** : la phase 0-B s'appuierait sur des modules dont l'installation n'est pas prouvée.
+- **État** : campagne 1 (9 nov.) exécutée mais **non probante** (code Odoo mélangé, données de démonstration
+  absentes : `docs/03` §6.1). Défauts corrigés ; **campagne 2 à exécuter**.
 
 ### P-002 — Socle technique
 - **Proposition** : Ubuntu Server 24.04 LTS, Python 3.12, PostgreSQL 16 ; image d'exécution
   construite depuis `odoo/docker` @ `f900094` complétée par `docker/Dockerfile.test` ; code Odoo exécuté
   depuis le commit figé ; image PostgreSQL figée par digest (`scripts/pin_postgres_digest.sh`).
-- **Digest PostgreSQL retenu** : *à renseigner après exécution de la procédure (`docs/01` §3.1).*
+- **Digest PostgreSQL retenu** : `postgres:16@sha256:f9a7b9ebf6f56201f949db745e47bc423c0f0f8294bafe991cc10bf74b029657`
+  (figé le 2026-11-09 par `scripts/pin_postgres_digest.sh`, contrôlé dans la campagne 1).
 - **Justification** : distribution de référence d'Odoo 19 (`requirements.txt`) ; image officielle
   basée sur `ubuntu:noble` ; exigences `release.py` respectées (Python 3.10-3.14, PostgreSQL ≥ 13).
 - **Alternative** : Debian 12 (également référence) — aucun avantage identifié pour Fayadort.
 
 ### P-003 — Catégories des modules candidats
 - **Proposition** : adopter les catégories de `scripts/audit/candidates.txt` (source unique) :
-  66 « retenu » (28 natifs, 38 OCA), 3 « à évaluer » (`stock_landed_costs_purchase_auto`,
-  `stock_secondary_unit`, `mis_builder_cash_flow`), 1 « piste séparée » (`payroll`), 6 « différé »,
+  65 « retenu » (28 natifs, 37 OCA), 4 « à évaluer » (`stock_landed_costs_purchase_auto`,
+  `stock_secondary_unit`, `mis_builder_cash_flow`, `account_fiscal_year` — voir P-012), 1 « piste séparée » (`payroll`), 6 « différé »,
   2 « rejeté » (`purchase_landed_cost`, `mrp_production_back_to_draft`).
 - **Règle** : les modules « à évaluer » et « piste séparée » sont testés dans des groupes distincts (E-*, S-*)
   dont le résultat est **informatif** ; leur réussite ne les fait pas passer en « retenu ». Tout changement
@@ -127,6 +130,18 @@ nouvelle entrée qui la remplace explicitement.
   (états SYSCOHADA, DSF, TVA et retenues, accises éventuelles, déclarations sociales, facture électronique)
   et, pour chacune, la couverture visée (natif, OCA, paramétrage, développement, hors ERP) et le test de
   validation correspondant. Aucune mise en production de la comptabilité sans cette validation.
+
+### P-012 — `account_fiscal_year` : de « retenu » à « à évaluer »
+- **Constat** (campagne 1, confirmé dans le code) : installé avec `mis_builder`, ce module provoque une erreur
+  d'accès pour tout utilisateur sans droits comptables complets qui calcule un rapport `mis_builder`
+  (il recherche les exercices sans élévation de droits ; lecture réservée aux groupes comptables).
+  Pour Fayadort : un directeur ou un responsable de production consultant un tableau de bord financier.
+- **Analyse** : le module sert aux exercices **non calendaires** ou multiples. L'exercice OHADA correspond en
+  principe à l'année civile, déjà géré nativement (dernier jour et mois de l'exercice de la société) —
+  **à confirmer par l'expert-comptable**.
+- **Proposition** : le passer en « à évaluer » (fait dans `candidates.txt`, réversible), puis en « différé »
+  si l'expert-comptable confirme l'exercice civil. Alternative si le module s'avère nécessaire : droits de
+  lecture des exercices pour les groupes concernés, dans un module `fay_*`, testés.
 
 ## Informations métier attendues de Fayadort (bloquantes pour la phase 0-B)
 

@@ -1,8 +1,14 @@
 # Image de TEST : image d'exécution officielle Odoo 19.0 (figée par commit, voir repos.yaml)
 # + dépendances Python supplémentaires listées dans requirements-extra.txt.
-ARG BASE_IMAGE
+ARG BASE_IMAGE=fayadort/odoo19-runtime-base:f900094
 FROM ${BASE_IMAGE}
 USER root
+# Retire le paquet Python Odoo installé par l'image officielle (paquet nightly).
+# En 19.0, « odoo » et « odoo.addons » sont des paquets d'espace de noms : tous les dossiers odoo/
+# présents sur le chemin Python sont fusionnés. Sans cette suppression, les modules standard étaient
+# chargés depuis /usr/lib/python3/dist-packages/odoo/addons au lieu de src/odoo (commit figé).
+RUN rm -rf /usr/lib/python3/dist-packages/odoo /usr/bin/odoo \
+    && test ! -e /usr/lib/python3/dist-packages/odoo
 COPY requirements-extra.txt /tmp/requirements-extra.txt
 RUN pip3 install --no-cache-dir --break-system-packages -r /tmp/requirements-extra.txt \
     && pip3 freeze > /opt/fayadort-pip-freeze.txt

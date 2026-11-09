@@ -8,7 +8,8 @@ Décisions validées : `DECISIONS.md`. Ne jamais les modifier silencieusement.
 - **Phase en cours : 0-A — Audit technique du socle Odoo 19.0 Community.**
 - **Dernier point validé :** prompt maître V2.3 adopté ; Odoo 19.0 Community verrouillé (DEC-001).
 - Livrables 0-A remis puis revus (revue corrective) le 2026-11-09 : **en attente de validation**
-  (propositions P-001 à P-011 dans `DECISIONS.md`).
+  (propositions P-001 à P-012 dans `DECISIONS.md`).
+- Campagne de tests 1 non probante (code mélangé, démo absente) ; environnement corrigé ; campagne 2 à lancer.
 - Prochaine étape après validation : exécuter `scripts/test_install.sh` (P-001), puis phase 0-B
   (nécessite les réponses métier de Fayadort).
 

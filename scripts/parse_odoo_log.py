@@ -13,6 +13,8 @@ Compteurs :
       when loading database » -> {failed, errors, run} ; None si aucun bilan (tests non lancés)
   test_modules_failed : modules signalés « Module X: n failures, m errors of t tests »
   browser_tests_skipped : entrées « Chrome executable not found » (tests navigateur ignorés)
+  addons_paths / foreign_addons_paths : chemins de modules annoncés au démarrage (« addons paths: »)
+      et ceux situés hors des sources figées (/mnt/src/) et du dossier de données (/var/lib/odoo/)
 
 Usage : parse_odoo_log.py <journal>
 """
@@ -23,17 +25,24 @@ import sys
 ENTRY = re.compile(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} \d+ (\w+) (\S+) ([\w.]+): (.*)$')
 SUMMARY = re.compile(r'(\d+) failed, (\d+) error\(s\) of (\d+) tests when loading database')
 MODULE_FAIL = re.compile(r'Module (\S+): (\d+) failures, (\d+) errors of (\d+) tests')
+QUOTED_PATH = re.compile(r"'(/[^']+)'")
+ALLOWED_PREFIXES = ('/mnt/src/', '/var/lib/odoo/')
 
 
 def parse(path):
     res = {'critical': 0, 'error': 0, 'warning': 0, 'db_init_failed': False,
            'tests': None, 'test_modules_failed': [], 'browser_tests_skipped': 0,
-           'first_errors': []}
+           'first_errors': [], 'addons_paths': [], 'foreign_addons_paths': []}
     for line in open(path, encoding='utf-8', errors='replace'):
         m = ENTRY.match(line.rstrip('\n'))
         if not m:
             continue
         level, _db, logger, msg = m.groups()
+        if msg.startswith('addons paths:'):
+            paths = QUOTED_PATH.findall(msg)
+            res['addons_paths'] = paths
+            res['foreign_addons_paths'] = [p for p in paths if not p.startswith(ALLOWED_PREFIXES)]
+            continue
         s = SUMMARY.search(msg)
         if s and logger == 'odoo.tests.result':
             f, e, n = map(int, s.groups())

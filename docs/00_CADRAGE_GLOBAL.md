@@ -80,8 +80,11 @@ séparation des groupes de validation (V-*), d'évaluation (E-*) et de piste sé
    plan de comptes SYSCOHADA, 7 taxes, déclaration de TVA ; ni états financiers, ni DSF, ni retenues à la
    source, ni déclarations sociales. **La conformité comptable et fiscale n'est pas acquise** (`02` §2.8,
    P-011). → `02_AUDIT_MODULES_NATIFS.md`
-2. **L'OCA comble la majorité des manques fonctionnels.** 66 modules retenus pour validation
-   (28 natifs, 38 OCA), 3 à évaluer, 1 en piste séparée, 6 différés, 2 rejetés. Audit statique : aucun
+2. **L'OCA comble la majorité des manques fonctionnels.** 65 modules retenus pour validation
+   (28 natifs, 37 OCA), 4 à évaluer, 1 en piste séparée, 6 différés, 2 rejetés.
+   Une première campagne de tests réels (9 nov.) a été invalidée par deux défauts de l'environnement de
+   test, corrigés depuis ; elle a révélé un conflit réel entre `account_fiscal_year` et `mis_builder`
+   (`03` §6.1). Audit statique : aucun
    module bloquant ; une dépendance externe à fournir (`openupgradelib`, pour `hr_holidays_public`),
    ajoutée à l'image de test. → `03_AUDIT_OCA.md`
 3. **Développements spécifiques réellement nécessaires** (confirmé par absence dans Community et OCA 19.0) :
