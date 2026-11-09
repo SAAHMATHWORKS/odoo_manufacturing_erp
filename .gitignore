@@ -1,0 +1,9 @@
+# Sources tierces récupérées par scripts/fetch_repos.py (figées dans repos.yaml)
+/src/
+# Journaux des tests d'installation
+/test-logs/
+# Configuration générée
+/docker/odoo.test.conf
+__pycache__/
+*.pyc
+.env

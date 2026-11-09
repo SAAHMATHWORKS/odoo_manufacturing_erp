@@ -1,0 +1,44 @@
+# Environnement de TEST jetable — Phase 0-A (tests d'installation des modules).
+# Aucune donnée réelle de Fayadort. Ne pas utiliser en production.
+#
+# Préalable : python3 scripts/fetch_repos.py   (sources figées dans repos.yaml)
+# Lancement : bash scripts/test_install.sh
+name: fayadort-test
+
+services:
+  db:
+    # PostgreSQL 16 = version de la distribution de référence Ubuntu 24.04 (Odoo 19 exige >= 13).
+    # À FIGER PAR DIGEST après le premier pull (le script test_install.sh l'affiche) : postgres:16@sha256:...
+    image: postgres:16
+    environment:
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: odoo_test_only
+      POSTGRES_DB: postgres
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo"]
+      interval: 5s
+      retries: 20
+
+  odoo:
+    # Image d'exécution construite depuis le Dockerfile officiel Odoo 19.0, figé sur un commit
+    # (base ubuntu:noble / Python 3.12, wkhtmltopdf, dépendances Python système).
+    # Le code Odoo exécuté est celui de src/odoo, au commit figé dans repos.yaml.
+    build:
+      context: https://github.com/odoo/docker.git#f900094eb7492968332868d686caf22b966592ca:19.0
+    image: fayadort/odoo19-runtime:f900094
+    depends_on:
+      db:
+        condition: service_healthy
+    entrypoint: []
+    command: ["sleep", "infinity"]
+    volumes:
+      - ../src:/mnt/src:ro
+      - ./odoo.test.conf:/etc/odoo/odoo.test.conf:ro
+      - ../test-logs:/mnt/logs
+      - odoo-data:/var/lib/odoo
+
+volumes:
+  db-data:
+  odoo-data:

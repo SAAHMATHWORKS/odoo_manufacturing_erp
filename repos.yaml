@@ -1,0 +1,139 @@
+# repos.yaml — verrouillage des sources (Phase 0-A, relevé du 2026-11-09)
+# Chaque dépôt est figé sur un commit précis. Ne JAMAIS remplacer un commit par le nom de branche.
+# Toute mise à jour : analyse des changements, tests, décision dans DECISIONS.md, puis modification ici.
+# Lu par scripts/fetch_repos.py. Les modules listés sont les candidats audités (statut dans docs/03_AUDIT_OCA.md).
+
+odoo:
+  url: https://github.com/odoo/odoo.git
+  branch: '19.0'
+  commit: a27a1090b519a01bf308f0c43c5dd4254458a5ae
+  commit_date: '2026-11-09'
+  path: src/odoo
+
+docker_runtime:
+  # Image d'exécution construite depuis le Dockerfile officiel Odoo 19.0 (base ubuntu:noble, paquet nightly 20261102)
+  url: https://github.com/odoo/docker.git
+  commit: f900094eb7492968332868d686caf22b966592ca
+  subdir: '19.0'
+
+oca:
+  tier-validation:
+    url: https://github.com/OCA/tier-validation.git
+    branch: '19.0'
+    commit: 4f16809993cc4df04853534191867da7713970c1
+    commit_date: '2026-11-09'
+    modules: [base_tier_validation, purchase_tier_validation, purchase_request_tier_validation]
+  purchase-workflow:
+    url: https://github.com/OCA/purchase-workflow.git
+    branch: '19.0'
+    commit: 8c86d5a2bd1430f124e71005f0b19d607643ce13
+    commit_date: '2026-11-08'
+    modules: [purchase_request]
+  stock-logistics-workflow:
+    url: https://github.com/OCA/stock-logistics-workflow.git
+    branch: '19.0'
+    commit: bb03506a306e5c81812361db8c682f60c4ec165a
+    commit_date: '2026-11-08'
+    modules: [stock_landed_costs_purchase_auto, stock_no_negative, scrap_reason_code]
+  stock-logistics-warehouse:
+    url: https://github.com/OCA/stock-logistics-warehouse.git
+    branch: '19.0'
+    commit: e53710de6053e9fd13b13dc855be944b085f6c8c
+    commit_date: '2026-11-05'
+    modules: [stock_demand_estimate, stock_secondary_unit]
+  product-attribute:
+    url: https://github.com/OCA/product-attribute.git
+    branch: '19.0'
+    commit: 01799382ea09d2bc1c7a525f0e6559f48f3c5a4c
+    commit_date: '2026-11-07'
+    modules: ['product_secondary_unit (dépendance)']
+  manufacture:
+    url: https://github.com/OCA/manufacture.git
+    branch: '19.0'
+    commit: ca0a97252048a47206a27c3807d77620e2595418
+    commit_date: '2026-11-03'
+    modules: [quality_control_oca, mrp_multi_level, mrp_multi_level_estimate, mrp_bom_hierarchy, mrp_bom_tracking, mrp_warehouse_calendar]
+  maintenance:
+    url: https://github.com/OCA/maintenance.git
+    branch: '19.0'
+    commit: 24ae3dfb690e0c2240484de8a08dfe61a470202a
+    commit_date: '2026-11-03'
+    modules: [maintenance_plan, maintenance_equipment_status, maintenance_request_purchase, maintenance_product]
+  account-analytic:
+    url: https://github.com/OCA/account-analytic.git
+    branch: '19.0'
+    commit: f841015584f829c50a2cd5584fb50e6bb3a4a4c6
+    commit_date: '2026-11-08'
+    modules: [stock_analytic, mrp_stock_analytic, purchase_analytic, account_analytic_required]
+  account-financial-reporting:
+    url: https://github.com/OCA/account-financial-reporting.git
+    branch: '19.0'
+    commit: f48b4ea777c444256aa1c215ec3117d604b5feff
+    commit_date: '2026-10-21'
+    modules: [account_financial_report, account_tax_balance, partner_statement, mis_builder_cash_flow]
+  mis-builder:
+    url: https://github.com/OCA/mis-builder.git
+    branch: '19.0'
+    commit: cd4938376f66cd780c576f553df70b7570030a3a
+    commit_date: '2026-11-08'
+    modules: [mis_builder, mis_builder_budget]
+  account-reconcile:
+    url: https://github.com/OCA/account-reconcile.git
+    branch: '19.0'
+    commit: 81321938a1a9bfbcff8982891f2fb9e88d816913
+    commit_date: '2026-11-08'
+    modules: [account_reconcile_oca, account_statement_base]
+  account-financial-tools:
+    url: https://github.com/OCA/account-financial-tools.git
+    branch: '19.0'
+    commit: b3c7c0be3708abaabeb668978a74839cd59396c4
+    commit_date: '2026-11-09'
+    modules: [account_asset_management, account_fiscal_year, account_lock_date_update]
+  hr-holidays:
+    url: https://github.com/OCA/hr-holidays.git
+    branch: '19.0'
+    commit: abd1ff286b505d95f8fd6219adbe1a711f1a3ba7
+    commit_date: '2026-10-15'
+    modules: [hr_holidays_public]
+  calendar:
+    url: https://github.com/OCA/calendar.git
+    branch: '19.0'
+    commit: a0f55db96b9f5e1d7889b1b50dc0c3e5dd677baf
+    commit_date: '2026-08-17'
+    modules: ['calendar_public_holiday (dépendance)']
+  hr-attendance:
+    url: https://github.com/OCA/hr-attendance.git
+    branch: '19.0'
+    commit: c5964bd1b322199e616eb4a627577a0fcc57bc45
+    commit_date: '2026-10-24'
+    modules: [hr_attendance_reason]
+  payroll:
+    url: https://github.com/OCA/payroll.git
+    branch: '19.0'
+    commit: 2eca6caafc74d4a592ee0ca75606b4c6e3ce75b9
+    commit_date: '2026-11-03'
+    modules: ['payroll (piste séparée)']
+  server-tools:
+    url: https://github.com/OCA/server-tools.git
+    branch: '19.0'
+    commit: a828058ebaca96a2320f8eb5172d86d10a8409e8
+    commit_date: '2026-11-03'
+    modules: [auditlog]
+  server-ux:
+    url: https://github.com/OCA/server-ux.git
+    branch: '19.0'
+    commit: af19073dc86443bad8590811649a54172a81a1ef
+    commit_date: '2026-11-06'
+    modules: [date_range]
+  reporting-engine:
+    url: https://github.com/OCA/reporting-engine.git
+    branch: '19.0'
+    commit: 2e3240211960f34bf6e07c1f0e849aaf249a6dfc
+    commit_date: '2026-11-06'
+    modules: [report_xlsx]
+  web:
+    url: https://github.com/OCA/web.git
+    branch: '19.0'
+    commit: 80f85e9bc62858b36f1c18471afba48960305a72
+    commit_date: '2026-11-03'
+    modules: [web_responsive, web_environment_ribbon]
