@@ -13,7 +13,7 @@ services:
   db:
     # PostgreSQL 16 = version de la distribution de référence Ubuntu 24.04 (Odoo 19 exige >= 13).
     # Figer par digest avec : bash scripts/pin_postgres_digest.sh   (voir docs/01_SOCLE_ODOO19.md §3.1)
-    image: postgres:16
+    image: postgres:16@sha256:f9a7b9ebf6f56201f949db745e47bc423c0f0f8294bafe991cc10bf74b029657
     environment:
       POSTGRES_USER: odoo
       POSTGRES_PASSWORD: odoo_test_only
