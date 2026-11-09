@@ -184,7 +184,7 @@ d'intention de commercialiser, après un avis juridique.
 | Auto-test de l'audit statique sur 10 modules volontairement défectueux | **Exécuté** — les 7 types de défauts détectés |
 | Récupération des dépôts aux commits figés (`fetch_repos.py --oca-only`) | **Exécuté** — 20/20 au bon commit |
 | Logique de `test_install.sh` (plan, bases, comptage, garde-fous) avec un Docker simulé | **Exécuté** — conforme ; ne remplace pas une exécution réelle |
-| Installation par groupe, tests OCA, installation de l'ensemble | Campagne 1 exécutée le 9 nov. 2026 — **résultats non probants** (§6.1) ; campagne 2 à lancer |
+| Installation par groupe, tests OCA, installation de l'ensemble | **Exécutés** — campagnes 2 à 4 (9 nov. 2026) : critères de validation remplis (§6.2 à §6.4) ; campagne 1 non probante (§6.1) |
 
 Plan de tests (généré par `scripts/test_plan.py`, couverture vérifiée automatiquement) : 11 groupes
 V-domaine + V-ENSEMBLE (65 modules retenus) ; 4 groupes E-module + E-ENSEMBLE (69) ; 1 groupe S-payroll.
@@ -214,7 +214,78 @@ erreur ; 9 groupes de validation sur 10 avec tests OCA sans échec ; **V-Comptab
 | `stock_landed_costs_purchase_auto` (5 erreurs) | « no default journal is configured for landed costs » : base sans plan comptable ni journaux | Environnement (démo absente). **Enseignement fonctionnel** : ce module bloque la confirmation de toute commande d'achat tant qu'un journal de frais d'approche n'est pas configuré |
 | `partner_statement` (2 erreurs) | « No journal could be found … for any of those types: sale » : base sans journaux | Environnement (démo absente) |
 | `mis_builder.test_unprivileged` (1 erreur) | Erreur d'accès sur `account.fiscal.year` via `account_fiscal_year` | **Réelle** : interaction entre deux modules OCA (P-012) |
-| `mis_builder.test_drilldown_action_name_with_account` (1 échec) | Nom d'action différent de celui attendu ; l'assertion n'affiche pas les valeurs | Indéterminée : à revoir après la campagne 2 |
+| `mis_builder.test_drilldown_action_name_with_account` (1 échec) | Nom d'action différent de celui attendu ; l'assertion n'affiche pas les valeurs | Liée à l'environnement de la campagne 1 : ne se reproduit plus (campagnes 2 et suivantes) |
+
+### 6.2 Campagne 2 (20261109_152909) — complète, code figé, AVEC données de démonstration
+
+Environnement vérifié : code Odoo importable uniquement depuis `src/` ; PostgreSQL figé par digest.
+
+| Groupe | Installation | Tests OCA (exécutés / échecs / erreurs) |
+|---|---|---|
+| V-Achats | 9/9 | 102 / 0 / 0 |
+| V-Importations | 2/2 | aucun module OCA |
+| V-Stocks | 7/7 | 18 / 0 / 0 |
+| V-Fabrication | 7/7 | 26 / **2** / 0 |
+| V-Qualite | 1/1 | 10 / 0 / 0 |
+| V-Maintenance | 5/5 | 4 / 0 / **3** (14 tests non exécutés : erreur de préparation) |
+| V-Planification | 3/3 | 45 / **5** / **4** |
+| V-Ventes | 3/3 | aucun module OCA |
+| V-Comptabilite | 14/14 | 274 / 0 / 0 |
+| V-RH | 7/7 | 19 / 0 / 0 |
+| V-Transverse | 7/7 | 76 / 0 / 0 |
+| **V-ENSEMBLE** | **65/65, 0 erreur** | installation seule |
+| E-stock_landed_costs_purchase_auto *(informatif)* | 1/1 | 5 / 0 / 0 |
+| E-stock_secondary_unit *(informatif)* | 1/1 | 6 / 0 / 0 |
+| E-mis_builder_cash_flow *(informatif)* | 1/1 | 11 / 0 / 0 |
+| E-account_fiscal_year *(informatif)* | 1/1 | 4 / 0 / 0 |
+| E-ENSEMBLE *(informatif)* | 69/69, 0 erreur | installation seule |
+| S-payroll *(informatif)* | 1/1 | 27 / 0 / 0 |
+
+Aucune erreur ni erreur critique pendant les installations.
+
+### 6.3 Campagne 3 (20261109_173154) — groupes en échec, SANS données de démonstration
+
+| Groupe | Installation | Tests OCA |
+|---|---|---|
+| V-Fabrication | 7/7 | 26 / 0 / 0 |
+| V-Maintenance | 5/5 | 18 / 0 / 0 |
+| V-Planification | 3/3 | 45 / 0 / 0 |
+
+Même code, même image : seule la présence des données de démonstration diffère. Classement des 14 échecs
+et erreurs de la campagne 2, vérifié dans le code des tests et des données de démonstration :
+
+| Module | Cause | Classement |
+|---|---|---|
+| `mrp_bom_hierarchy` (2 échecs) | Le test recherche toutes les nomenclatures ayant une sous-nomenclature et attend uniquement la sienne ; les nomenclatures de démonstration d'Odoo remplissent aussi la condition. Le résultat de la recherche est correct. | Test fragile |
+| `maintenance_plan` (3 erreurs de préparation) | Le test crée le type de maintenance « Weekly », déjà présent dans les données de démonstration du module (`demo/demo_maintenance_plan.xml` l.9) ; la contrainte d'unicité du nom refuse le doublon. | Test fragile |
+| `mrp_multi_level` (5 échecs, 3 erreurs), `mrp_multi_level_estimate` (1 erreur) | La préparation des tests recrée sa propre copie des données de démonstration (`_create_demo_data()`, `tests/common.py` l.45) : avec la démonstration installée, produits, zones MRP et nomenclatures existent en double. | Test fragile |
+
+**Aucun défaut fonctionnel.** Le calcul des besoins de `mrp_multi_level` n'est pas en cause.
+
+À l'inverse, les tests de `partner_statement` et de `stock_landed_costs_purchase_auto` exigent les données de
+démonstration (plan comptable, journaux) : aucune condition unique ne fait passer tous les tests.
+
+### 6.4 Campagne 4 (20261109_175023) — ensemble des modules retenus, SANS données de démonstration
+
+| Groupe | Installation | Erreurs |
+|---|---|---|
+| **V-ENSEMBLE** | **65/65** | 0 erreur, 0 erreur critique |
+
+Condition la plus proche de la production (base sans données de démonstration, tous les modules retenus
+ensemble).
+
+### 6.5 Bilan au regard de la règle de validation (P-001)
+
+| Critère | Résultat |
+|---|---|
+| Installation de chaque module retenu, avec et sans démonstration | **Rempli** : V-ENSEMBLE 65/65 dans les deux conditions (campagnes 2 et 4), sans erreur |
+| Tous les tests OCA de chaque groupe de validation réussis dans au moins une condition | **Rempli** : 7 groupes avec démonstration (campagne 2), 3 groupes sans démonstration (campagne 3) ; 2 groupes sans module OCA |
+| Échecs de l'autre condition analysés et classés | **Rempli** : 14 sur 14 classés « test fragile » (§6.3), 0 défaut fonctionnel |
+
+Limites qui demeurent : les tests des modules **natifs** d'Odoo ne sont pas exécutés (couverts par l'intégration
+continue d'Odoo SA) ; Chrome est absent de l'image, mais aucun test navigateur n'a été signalé comme ignoré dans
+les groupes testés ; une installation réussie ne valide pas l'adéquation fonctionnelle aux processus de
+Fayadort (phase 0-B).
 
 ## 7. Commits figés (`repos.yaml`)
 

@@ -9,7 +9,7 @@ Décisions validées : `DECISIONS.md`. Ne jamais les modifier silencieusement.
 - **Dernier point validé :** prompt maître V2.3 adopté ; Odoo 19.0 Community verrouillé (DEC-001).
 - Livrables 0-A remis puis revus (revue corrective) le 2026-11-09 : **en attente de validation**
   (propositions P-001 à P-012 dans `DECISIONS.md`).
-- Campagne de tests 1 non probante (code mélangé, démo absente) ; environnement corrigé ; campagne 2 à lancer.
+- Tests réels terminés (campagnes 2 à 4) : critères de validation P-001 remplis ; en attente de décision.
 - Prochaine étape après validation : exécuter `scripts/test_install.sh` (P-001), puis phase 0-B
   (nécessite les réponses métier de Fayadort).
 

@@ -6,7 +6,7 @@
 | Phase | 0-A — Audit technique du socle Odoo 19.0 Community |
 | Date du relevé | 9 novembre 2026 |
 | Référence | `docs/PROMPT_MAITRE_V2.3.md` |
-| Statut | **Revue corrective effectuée le 9 nov. 2026 — en attente de validation** (arrêt obligatoire 0-A) |
+| Statut | **Revue corrective et tests d'installation réels effectués le 9 nov. 2026 — en attente de validation** (arrêt obligatoire 0-A) |
 
 ## 1. Objet de la phase 0-A
 
@@ -31,28 +31,29 @@ apporte en 19.0, ce qui manque, et figer les versions des sources. Aucun module 
 4. **Verrouillage** de Odoo et de 20 dépôts OCA sur des commits précis ; script de
    récupération testé (`scripts/fetch_repos.py`).
 
-## 3. Limite importante : tests d'installation non exécutés
+## 3. Tests d'installation réels
 
-L'environnement dans lequel l'audit a été réalisé dispose de Docker, mais **sans démon Docker
-actif ni accès réseau pour installer des paquets**. Il a donc été **impossible d'installer
-Odoo et d'exécuter les tests des modules**. La logique du script de tests a été vérifiée avec un
-Docker simulé, ce qui ne remplace pas une exécution réelle.
-
-Conséquence : tous les modules OCA sont classés au mieux **« retenu (à tester) »**, jamais « validé ».
+L'environnement d'audit (sans démon Docker ni réseau d'installation) ne permettait pas d'installer Odoo.
+Les tests réels ont donc été exécutés le 9 novembre 2026 sur la machine du responsable du projet, avec
+l'environnement Docker fourni. Quatre campagnes ont eu lieu ; la première a été invalidée par deux défauts de
+l'environnement de test, corrigés depuis. Résultats et analyse : `03_AUDIT_OCA.md` §6.
 
 ### Commandes à exécuter sur une machine disposant de Docker
 
 ```bash
 cd fayadort-erp
-python3 -m pip install --user pyyaml          # si PyYAML est absent
+python3 -m venv .venv && source .venv/bin/activate      # environnement virtuel (pip --user est refusé
+python -m pip install "PyYAML==6.0.3" "lxml==6.1.3"     #  sur Ubuntu 24.04 et dans un venv)
 python3 scripts/fetch_repos.py                # Odoo + OCA aux commits figés (plusieurs minutes)
-bash scripts/pin_postgres_digest.sh           # fige PostgreSQL par digest (voir 01 §3.1)
-git add docker/docker-compose.test.yml && git commit -m "Fige l'image PostgreSQL de test par digest"
 python3 scripts/test_plan.py --check          # couverture du plan de tests
-bash scripts/test_install.sh                  # demande confirmation avant de remettre à zéro l'environnement de TEST
-cat test-logs/*/RESULTS.md                    # synthèse ; détails dans test-logs/<campagne>/
+bash scripts/test_install.sh                  # avec données de démonstration (confirmation demandée)
+bash scripts/test_install.sh --no-demo --only V-ENSEMBLE   # condition proche de la production
+cat "$(ls -td test-logs/*/ | head -1)RESULTS.md"          # synthèse de la dernière campagne
 docker compose -p fayadort-test -f docker/docker-compose.test.yml down -v   # nettoyage final
 ```
+
+L'image PostgreSQL est déjà figée par digest (P-002). Lancer les commandes **une par une** :
+`test_install.sh` lit sa confirmation au clavier.
 
 Ce que garantit `test_install.sh` : environnement de test remis à zéro à chaque campagne (volumes du
 seul projet `fayadort-test`, après confirmation) ; bases neuves au nom unique, refus de réutiliser une
@@ -82,9 +83,11 @@ séparation des groupes de validation (V-*), d'évaluation (E-*) et de piste sé
    P-011). → `02_AUDIT_MODULES_NATIFS.md`
 2. **L'OCA comble la majorité des manques fonctionnels.** 65 modules retenus pour validation
    (28 natifs, 37 OCA), 4 à évaluer, 1 en piste séparée, 6 différés, 2 rejetés.
-   Une première campagne de tests réels (9 nov.) a été invalidée par deux défauts de l'environnement de
-   test, corrigés depuis ; elle a révélé un conflit réel entre `account_fiscal_year` et `mis_builder`
-   (`03` §6.1). Audit statique : aucun
+   **Tests réels sur la machine du responsable du projet (9 nov.)** : les 65 modules retenus s'installent
+   ensemble, avec et sans données de démonstration, sans aucune erreur ; tous les groupes de validation
+   passent leurs tests OCA dans au moins une condition ; les 14 échecs observés avec démonstration sont des
+   tests fragiles, aucun défaut fonctionnel. Un conflit réel a été trouvé et écarté : `account_fiscal_year` avec
+   `mis_builder` (P-012). Détail : `03` §6. Audit statique : aucun
    module bloquant ; une dépendance externe à fournir (`openupgradelib`, pour `hr_holidays_public`),
    ajoutée à l'image de test. → `03_AUDIT_OCA.md`
 3. **Développements spécifiques réellement nécessaires** (confirmé par absence dans Community et OCA 19.0) :

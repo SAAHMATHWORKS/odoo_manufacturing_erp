@@ -28,8 +28,15 @@ nouvelle entrée qui la remplace explicitement.
   validé que si son groupe V-domaine **et** V-ENSEMBLE sont « OK » ; « À ANALYSER » exige une revue des
   erreurs avant décision.
 - **Impact si refusé** : la phase 0-B s'appuierait sur des modules dont l'installation n'est pas prouvée.
-- **État** : campagne 1 (9 nov.) exécutée mais **non probante** (code Odoo mélangé, données de démonstration
-  absentes : `docs/03` §6.1). Défauts corrigés ; **campagne 2 à exécuter**.
+- **Règle de validation proposée** (aucune condition de test unique ne convient à tous les modules OCA) :
+  1. installation de chaque module retenu réussie **avec et sans** données de démonstration ;
+  2. tous les tests OCA de chaque groupe de validation réussis dans **au moins une** des deux conditions ;
+  3. chaque échec obtenu dans l'autre condition analysé et classé : « test fragile » (documenté, non bloquant)
+     ou « défaut fonctionnel » (module retiré, corrigé ou contourné, décision tracée ici).
+- **État au 9 nov. 2026** : campagne 1 non probante (`docs/03` §6.1) ; campagnes 2 à 4 : **les trois critères
+  sont remplis** — 65/65 modules installés ensemble avec et sans démonstration, 0 erreur ; tous les groupes de
+  validation passent dans une condition ; 14 échecs sur 14 classés « test fragile », 0 défaut fonctionnel
+  (`docs/03` §6.2 à §6.5). **Proposition : déclarer validés les 65 modules « retenu ».**
 
 ### P-002 — Socle technique
 - **Proposition** : Ubuntu Server 24.04 LTS, Python 3.12, PostgreSQL 16 ; image d'exécution
